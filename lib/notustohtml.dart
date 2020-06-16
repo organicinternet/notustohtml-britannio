@@ -18,8 +18,8 @@ class NotusHtmlCodec extends Codec<Delta, String> {
 }
 
 class _NotusHtmlEncoder extends Converter<Delta, String> {
-  static const kBold = 'b';
-  static const kItalic = 'i';
+  static const kBold = 'strong';
+  static const kItalic = 'em';
   static final kSimpleBlocks = <NotusAttribute, String>{
     NotusAttribute.bq: 'blockquote',
     NotusAttribute.ul: 'ul',
@@ -29,7 +29,7 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
   @override
   String convert(Delta input) {
     final iterator = DeltaIterator(input);
-    final buffer = StringBuffer();
+    final htmlBuffer = StringBuffer();
     final lineBuffer = StringBuffer();
     NotusAttribute<String> currentBlockStyle;
     NotusStyle currentInlineStyle = NotusStyle();
@@ -41,34 +41,36 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
       }
 
       if (blockStyle == null) {
-        buffer.write(currentBlockLines.join('\n\n'));
-        buffer.writeln();
+        // _writeParagraphTag(htmlBuffer);
+        htmlBuffer.write(currentBlockLines.join());
+        // _writeParagraphTag(htmlBuffer, close: true);
+        // htmlBuffer.writeln();
       } else if (blockStyle == NotusAttribute.code) {
-        _writeAttribute(buffer, blockStyle);
-        buffer.write(currentBlockLines.join('\n'));
-        _writeAttribute(buffer, blockStyle, close: true);
-        buffer.writeln();
+        _writeAttribute(htmlBuffer, blockStyle);
+        htmlBuffer.write(currentBlockLines.join('\n'));
+        _writeAttribute(htmlBuffer, blockStyle, close: true);
+        // htmlBuffer.writeln();
       } else if (blockStyle == NotusAttribute.bq) {
-        _writeAttribute(buffer, blockStyle);
-        buffer.write(currentBlockLines.join('\n'));
-        _writeAttribute(buffer, blockStyle, close: true);
-        buffer.writeln();
+        _writeAttribute(htmlBuffer, blockStyle);
+        htmlBuffer.write(currentBlockLines.join('\n'));
+        _writeAttribute(htmlBuffer, blockStyle, close: true);
+        // htmlBuffer.writeln();
       } else if (blockStyle == NotusAttribute.ol ||
           blockStyle == NotusAttribute.ul) {
-        _writeAttribute(buffer, blockStyle);
-        buffer.write("<li>");
-        buffer.write(currentBlockLines.join('</li><li>'));
-        buffer.write("</li>");
-        _writeAttribute(buffer, blockStyle, close: true);
-        buffer.writeln();
+        _writeAttribute(htmlBuffer, blockStyle);
+        htmlBuffer.write("<li>");
+        htmlBuffer.write(currentBlockLines.join('</li><li>'));
+        htmlBuffer.write("</li>");
+        _writeAttribute(htmlBuffer, blockStyle, close: true);
+        // htmlBuffer.writeln();
       } else {
         for (String line in currentBlockLines) {
-          _writeBlockTag(buffer, blockStyle);
-          buffer.write(line);
-          buffer.writeln();
+          _writeBlockTag(htmlBuffer, blockStyle);
+          htmlBuffer.write(line);
+          // htmlBuffer.writeln();
         }
       }
-      buffer.writeln();
+      // htmlBuffer.writeln();
     }
 
     void _handleSpan(String text, Map<String, dynamic> attributes) {
@@ -99,9 +101,9 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
     while (iterator.hasNext) {
       final operation = iterator.next();
       final operationData = operation.data;
-      final operationIsSingleLine = !operationData.contains('\n');
+      final operationHasNewLine = !operationData.contains('\n');
 
-      if (operationIsSingleLine) {
+      if (operationHasNewLine) {
         _handleSpan(operationData, operation.attributes);
       } else {
         final span = StringBuffer();
@@ -130,22 +132,25 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
     }
 
     _handleBlock(currentBlockStyle); // Close the last block
-    return buffer.toString().trim() /* .replaceAll("\n", "<br>") */;
+    return htmlBuffer.toString().trim() /* .replaceAll("\n", "<br>") */;
   }
 
   String _writeLine(String text, NotusStyle style) {
     final buffer = StringBuffer();
+    final bool containsHeading = style.contains(NotusAttribute.heading);
+    _writeParagraphTag(buffer);
     // Open heading
-    if (style.contains(NotusAttribute.heading)) {
+    if (containsHeading) {
       _writeAttribute(buffer, style.get<int>(NotusAttribute.heading));
     }
     // Write the text itself
     buffer.write(text);
     // Close the heading
-    if (style.contains(NotusAttribute.heading)) {
+    if (containsHeading) {
       _writeAttribute(buffer, style.get<int>(NotusAttribute.heading),
           close: true);
     }
+    _writeParagraphTag(buffer, close: true);
     return buffer.toString();
   }
 
@@ -159,26 +164,26 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
   }
 
   NotusStyle _writeInline(
-    StringBuffer buffer,
+    StringBuffer lineBuffer,
     String text,
     NotusStyle style,
     NotusStyle currentStyle,
   ) {
-    NotusAttribute wasA;
+    NotusAttribute hyperlinkAttribute;
     // First close any current styles if needed
-    for (NotusAttribute value in currentStyle.values) {
-      if (value.scope == NotusAttributeScope.line) continue;
-      if (value.key == "a") {
-        wasA = value;
+    for (NotusAttribute attribute in currentStyle.values) {
+      if (attribute.scope == NotusAttributeScope.line) continue;
+      if (attribute.key == "a") {
+        hyperlinkAttribute = attribute;
         continue;
       }
-      if (style.containsSame(value)) continue;
-      final padding = _trimRight(buffer);
-      _writeAttribute(buffer, value, close: true);
-      if (padding.isNotEmpty) buffer.write(padding);
+      if (style.containsSame(attribute)) continue;
+      final padding = _trimRight(lineBuffer);
+      _writeAttribute(lineBuffer, attribute, close: true);
+      if (padding.isNotEmpty) lineBuffer.write(padding);
     }
-    if (wasA != null) {
-      _writeAttribute(buffer, wasA, close: true);
+    if (hyperlinkAttribute != null) {
+      _writeAttribute(lineBuffer, hyperlinkAttribute, close: true);
     }
     // Now open any new styles.
     for (NotusAttribute value in style.values) {
@@ -187,11 +192,11 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
       final originalText = text;
       text = text.trimLeft();
       final padding = ' ' * (originalText.length - text.length);
-      if (padding.isNotEmpty) buffer.write(padding);
-      _writeAttribute(buffer, value);
+      if (padding.isNotEmpty) lineBuffer.write(padding);
+      _writeAttribute(lineBuffer, value);
     }
     // Write the text itself
-    buffer.write(text);
+    lineBuffer.write(text);
     return style;
   }
 
@@ -212,6 +217,10 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
     } else {
       throw ArgumentError('Cannot handle $attribute');
     }
+  }
+
+  void _writeParagraphTag(StringBuffer buffer, {bool close = false}) {
+    buffer.write(!close ? "<p>" : "</p>");
   }
 
   void _writeBoldTag(StringBuffer buffer, {bool close = false}) {
@@ -266,7 +275,6 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
 }
 
 class _NotusHtmlDecoder extends Converter<String, Delta> {
-  // TODO add new line to end of paragraphs
   @override
   Delta convert(String input) {
     Delta delta = Delta();
@@ -287,7 +295,11 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       delta = _parseNode(htmlNode, delta, nextNode);
     });
 
-    return delta;
+    if (delta.isNotEmpty && delta.last.data.endsWith('\n')) {
+      return delta;
+    } else {
+      return delta..insert('\n');
+    }
   }
 
   Delta _parseNode(
