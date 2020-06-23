@@ -186,9 +186,9 @@ packages:
   notus:
     dependency: "direct main"
     description:
-      name: notus
-      url: "https://pub.dartlang.org"
-    source: hosted
+      path: "../zefyr/packages/notus"
+      relative: true
+    source: path
     version: "0.1.5"
   package_config:
     dependency: transitive
