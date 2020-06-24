@@ -289,7 +289,6 @@ void main() {
               "<ul><li><a href=\"http://fake.link\">Hello World!</a></li></ul>");
         });
       },
-      skip: true,
     );
   });
 
@@ -358,12 +357,13 @@ void main() {
 
       test("Bold and Italic paragraph", () {
         final String html =
-            "<p><em><strong>Hello World!</strong></em><i><b>How are you?</b></i></p>";
+            "<p><em><strong>Hello World!</strong></em> <i><b>How are you?</b></i></p>";
         final NotusDocument doc = NotusDocument.fromJson([
           {
             "insert": "Hello World!",
             "attributes": {"i": true, "b": true}
           },
+          {"insert": " "},
           {
             "insert": "How are you?\n",
             "attributes": {"i": true, "b": true}
@@ -372,12 +372,28 @@ void main() {
 
         expect(converter.decode(html), doc.toDelta());
       });
+
+      test('Bold then Italic paragraph', () {
+        final String html = '<p><strong>Hello</strong> <em>World</em></p>';
+        final delta = Delta()
+          ..insert('Hello', {'b': true})
+          ..insert(' ')
+          ..insert('World\n', {'i': true});
+
+        compare(html, delta);
+      });
     });
 
     group('multi-line text', () {
-      test('plain', () {
+      test('two lines', () {
         final String html = '<p>Hello</p><p>World</p>';
         final delta = Delta()..insert('Hello\nWorld\n');
+
+        compare(html, delta);
+      });
+      test('three lines', () {
+        final String html = '<p>The</p><p>quick</p><p>brown</p>';
+        final delta = Delta()..insert('The\nquick\nbrown\n');
 
         compare(html, delta);
       });
@@ -593,7 +609,7 @@ void main() {
             'attributes': {'i': true},
           },
           {
-            'insert': 'World\n',
+            'insert': 'World!\n',
             'attributes': {'i': true, 'b': true},
           },
         ]);
@@ -612,11 +628,7 @@ void main() {
             'attributes': {'i': true, 'b': true},
           },
           {
-            'insert': ' ',
-            'attributes': {'i': true},
-          },
-          {
-            'insert': 'brown',
+            'insert': ' brown\n',
             'attributes': {'i': true},
           },
         ]);
@@ -632,7 +644,7 @@ void main() {
             'attributes': {'i': true},
           },
           {
-            'insert': 'Quick',
+            'insert': 'quick',
             'attributes': {'i': true, 'b': true},
           },
           {
@@ -640,7 +652,7 @@ void main() {
             'attributes': {'i': true},
           },
           {
-            'insert': 'Brown\n',
+            'insert': 'brown\n',
             'attributes': {'i': true, 'b': true},
           },
         ]);
