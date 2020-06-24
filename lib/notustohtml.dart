@@ -79,7 +79,6 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
     }
 
     void _handleLine(Map<String, dynamic> attributes) {
-      print('_handleLine: $attributes');
       final style = NotusStyle.fromJson(attributes);
       final lineBlock = style.get(NotusAttribute.block);
       final bool isLineBlock = currentBlockStyle == lineBlock;
@@ -106,11 +105,9 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
       } else {
         final spanBuffer = StringBuffer();
         for (int i = 0; i < operationData.length; i++) {
-          print('--- ${operationData[i].replaceAll('\n', '⏎')}');
           if (operationData[i] == '\n') {
             if (spanBuffer.isNotEmpty) {
               // Write the span if it's not empty.
-              print('spanBuffer isNotEmpty');
               _handleSpan(spanBuffer.toString(), operation.attributes);
             }
             // Close any open inline styles.
@@ -134,7 +131,6 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
   }
 
   String _writeLine(String text, NotusStyle style) {
-    print('_writeLine: style: $style');
     bool addPTag = !style.contains(NotusAttribute.block);
 
     final buffer = StringBuffer();
@@ -301,12 +297,14 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       delta = _parseNode(htmlNode, delta, nextNode);
     });
 
+    //// TOD re-enable this
     // Deltas must end with a newline aka \n
     if (delta.isNotEmpty && delta.last.data.endsWith('\n')) {
       return delta;
     } else {
       return delta..insert('\n');
     }
+    // return delta;
   }
 
   Delta _parseNode(
@@ -315,9 +313,8 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     dom.Node nextHtmlNode, {
     bool inList,
     Map<String, dynamic> parentAttributes,
+    Map<String, dynamic> parentBlockAttributes,
   }) {
-    print('- _parseNode: $htmlNode');
-
     if (htmlNode is dom.Element) {
       print('$htmlNode is Element');
       // The html node is an element
@@ -333,6 +330,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
             next: nextHtmlNode,
             inList: inList,
             attributes: parentAttributes,
+            parentBlockAttributes: parentBlockAttributes,
           );
         });
         return delta;
@@ -346,6 +344,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
             next: nextHtmlNode,
             inList: inList,
             attributes: parentAttributes,
+            parentBlockAttributes: parentBlockAttributes,
           );
         });
         return delta;
@@ -360,6 +359,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
           next: nextHtmlNode,
           inList: inList,
           attributes: parentAttributes,
+          parentBlockAttributes: parentBlockAttributes,
         );
         return delta;
       }
@@ -390,14 +390,15 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     dom.Element element,
     Delta delta, {
     Map<String, dynamic> attributes,
-    @required String listType,
+    Map<String, dynamic> parentBlockAttributes,
+    String listType,
     @required dom.Node next,
     @required bool inList,
   }) {
     final type = _supportedHTMLElements[element.localName];
     if (type == _HtmlType.BLOCK) {
-      Map<String, dynamic> blockAttributes = {};
-      if (attributes != null) blockAttributes = attributes;
+      final Map<String, dynamic> blockAttributes = parentBlockAttributes ?? {};
+
       /*  if (element.localName == "h1") {
         blockAttributes["heading"] = 1;
       }
@@ -418,13 +419,20 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       }
       element.nodes.asMap().forEach((index, node) {
         dom.Node next;
+        // Initialise `next` if possible
         if (index + 1 < element.nodes.length) next = element.nodes[index + 1];
-        delta = _parseNode(node, delta, next,
-            inList: element.localName == "li",
-            parentAttributes: blockAttributes);
+
+        delta = _parseNode(
+          node,
+          delta,
+          next,
+          inList: element.localName == "li",
+          parentAttributes: attributes,
+          parentBlockAttributes: blockAttributes,
+        );
       });
-      if (attributes == null) {
-        delta..insert("\n", blockAttributes);
+      if (parentBlockAttributes == null) {
+        delta..insert('\n', blockAttributes);
       }
       return delta;
     } else if (type == _HtmlType.EMBED) {

@@ -294,16 +294,17 @@ void main() {
   });
 
   group('Decode', () {
+    void compare(String html, Delta delta) {
+      expect(converter.decode(html), delta);
+    }
+
     group('Basic text', () {
       test('Plain paragraph', () {
         final String html = "<p>Hello World!</p>";
-        final NotusDocument doc = NotusDocument.fromJson([
-          {"insert": "Hello World!\n"}
-        ]);
 
-        print(converter.decode(html).toJson());
+        final delta = Delta()..insert('Hello World!\n');
 
-        expect(converter.decode(html), doc.toDelta());
+        compare(html, delta);
       });
 
       test("Bold paragraph(strong)", () {
@@ -370,6 +371,15 @@ void main() {
         ]);
 
         expect(converter.decode(html), doc.toDelta());
+      });
+    });
+
+    group('multi-line text', () {
+      test('plain', () {
+        final String html = '<p>Hello</p><p>World</p>';
+        final delta = Delta()..insert('Hello\nWorld\n');
+
+        compare(html, delta);
       });
     });
 
@@ -462,15 +472,12 @@ void main() {
       );
       test("Ordered list", () {
         final String html = "<p><ol><li>Hello World!</li></ol></p>";
-        final NotusDocument doc = NotusDocument.fromJson([
-          {"insert": "Hello World!"},
-          {
-            "insert": "\n",
-            "attributes": {"block": "ol"}
-          }
-        ]);
 
-        expect(converter.decode(html), doc.toDelta());
+        final delta = Delta()
+          ..insert('Hello World!')
+          ..insert('\n', {'block': 'ol'});
+
+        compare(html, delta);
       });
       test("List with bold", () {
         final String html = "<ol><li><strong>Hello World!</strong></li></ol>";
