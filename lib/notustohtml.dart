@@ -283,6 +283,17 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
 
     final dom.NodeList htmlNodes = html.body.nodes;
 
+    // Removes empty p tags like <p></p>
+    htmlNodes.removeWhere(
+      (dom.Node htmlNode) {
+        return htmlNode is dom.Element &&
+            htmlNode.localName == 'p' &&
+            htmlNode.nodes.isEmpty;
+      },
+    );
+
+    
+
     /// Converts each HTML node to a [Delta]
     htmlNodes.asMap().forEach((int index, dom.Node htmlNode) {
       dom.Node nextNode;
@@ -297,14 +308,21 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       delta = _parseNode(htmlNode, delta, nextNode);
     });
 
-    // Deltas must end with a newline aka \n
+    /* // Deltas must end with a newline aka \n
     if (delta.isNotEmpty && delta.last.data.endsWith('\n')) {
       return delta;
     } else {
-      // This is a workaround as sometimes the Delta is created without a
-      // trailing \n
-      final List<Operation> operations = delta.toList();
+      return _appendNewLine(delta);
+    } */
+    return delta;
+  }
 
+  Delta _appendNewLine(Delta delta) {
+    // This is a workaround as sometimes the Delta is created without a
+    // trailing \n
+    final List<Operation> operations = delta.toList();
+
+    if (operations.isNotEmpty) {
       final Operation lastOperation = operations.removeLast();
       operations.add(
         Operation.insert('${lastOperation.data}\n', lastOperation.attributes),
@@ -312,9 +330,10 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       delta = Delta();
 
       operations.forEach(delta.push);
-      return delta;
+    } else {
+      return delta..insert('\n');
     }
-    // return delta;
+    return delta;
   }
 
   Delta _parseNode(
@@ -361,6 +380,35 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
           );
         });
         return delta;
+      } else if (elementName == 'p') {
+        // TODO check if it only contains a br tag
+        // Paragraph
+        final nodes = element.nodes;
+
+        // TODO find a simpler way to express htis
+        if (nodes.length == 1 &&
+            nodes.first is dom.Element &&
+            (nodes.first as dom.Element).localName == 'br') {
+          // The p tag looks like <p><br></p> so we should treat it as a blank
+          // line
+          return delta..insert('\n');
+        } else {
+          for (int i = 0; i < nodes.length; i++) {
+            delta = _parseNode(
+              nodes[i],
+              delta,
+              nextHtmlNode,
+              parentAttributes: attributes,
+              parentBlockAttributes: blockAttributes,
+            );
+          }
+          if (delta.isEmpty || !delta.last.data.endsWith('\n')) {
+            delta = _appendNewLine(delta);
+          }
+          return delta;
+        }
+      } else if (elementName == 'br') {
+        return delta..insert('\n');
       } else if (_supportedHTMLElements[elementName] == null) {
         // Not a supported element
         return delta;
@@ -380,7 +428,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       print('$htmlNode is Text');
       // The html node is text
       dom.Text text = htmlNode;
-      // TODO confirm that element lookahead should occur here
+
       if (nextHtmlNode is dom.Element &&
           (nextHtmlNode.localName == 'br' || nextHtmlNode.localName == 'p')) {
         delta.insert(
@@ -407,6 +455,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     Map<String, dynamic> parentBlockAttributes,
     String listType,
     @required dom.Node next,
+    // bool addTrailingLineBreak = false,
     @required bool inList,
   }) {
     final Map<String, dynamic> attributes = Map.from(parentAttributes ?? {});
@@ -423,6 +472,15 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       }
       if (element.localName == "li") {
         blockAttributes["block"] = listType;
+      }
+      if (element.localName == "h1") {
+        blockAttributes["heading"] = 1;
+      }
+      if (element.localName == "h2") {
+        blockAttributes["heading"] = 2;
+      }
+      if (element.localName == "h3") {
+        blockAttributes["heading"] = 3;
       }
       element.nodes.asMap().forEach((index, node) {
         dom.Node next;
@@ -465,15 +523,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       if (element.localName == "strong" || element.localName == "b") {
         attributes["b"] = true;
       }
-      if (element.localName == "h1") {
-        attributes["heading"] = 1;
-      }
-      if (element.localName == "h2") {
-        attributes["heading"] = 2;
-      }
-      if (element.localName == "h3") {
-        attributes["heading"] = 3;
-      }
+
       if (element.localName == "a") {
         attributes["a"] = element.attributes["href"];
       }
@@ -481,12 +531,19 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       if (element.children.isEmpty) {
         // The element has no child elements i.e. this is the leaf element
         if (attributes["a"] != null) {
+          // It's a link
           delta..insert(element.text, attributes);
           if (inList == null || (inList != null && !inList)) {
             delta..insert("\n");
           }
         } else {
-          // If the next node is a br/p node then add a new line
+          delta
+            ..insert(
+              element.text,
+              attributes.isNotEmpty ? attributes : null,
+            );
+          /* // If the next node is a br/p node then add a new line
+          // TODO sometimes
           if (next is dom.Element &&
               (next.localName == "br" || next.localName == "p")) {
             delta
@@ -502,8 +559,9 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
                 element.text,
                 attributes.isNotEmpty ? attributes : null,
               );
-          }
+          } */
         }
+        // TODO ADD ELSE TO CHECK IF IS PARGRAPH
       } else {
         // The element has child elements(subclass of node) and potentially
         // text(subclass of node)
@@ -515,7 +573,6 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
           if (index + 1 < element.nodes.length) {
             nextNode = element.nodes[index + 1];
           }
-          // TODO fix attributes containing styling from the previous node
           _parseNode(
             node,
             delta,
@@ -535,9 +592,9 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     "blockquote": _HtmlType.BLOCK,
     "code": _HtmlType.BLOCK,
     "div": _HtmlType.BLOCK,
-    "h1": _HtmlType.INLINE,
-    "h2": _HtmlType.INLINE,
-    "h3": _HtmlType.INLINE,
+    "h1": _HtmlType.BLOCK,
+    "h2": _HtmlType.BLOCK,
+    "h3": _HtmlType.BLOCK,
     // Italic
     "em": _HtmlType.INLINE,
     "i": _HtmlType.INLINE,
