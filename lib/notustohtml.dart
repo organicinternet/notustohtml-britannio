@@ -292,8 +292,6 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       },
     );
 
-    
-
     /// Converts each HTML node to a [Delta]
     htmlNodes.asMap().forEach((int index, dom.Node htmlNode) {
       dom.Node nextNode;
@@ -308,12 +306,6 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       delta = _parseNode(htmlNode, delta, nextNode);
     });
 
-    /* // Deltas must end with a newline aka \n
-    if (delta.isNotEmpty && delta.last.data.endsWith('\n')) {
-      return delta;
-    } else {
-      return _appendNewLine(delta);
-    } */
     return delta;
   }
 
@@ -348,7 +340,6 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     final Map<String, dynamic> blockAttributes =
         Map.from(parentBlockAttributes ?? {});
     if (htmlNode is dom.Element) {
-      print('$htmlNode is Element');
       // The html node is an element
       dom.Element element = htmlNode;
       final String elementName = htmlNode.localName;
@@ -381,11 +372,10 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         });
         return delta;
       } else if (elementName == 'p') {
-        // TODO check if it only contains a br tag
         // Paragraph
         final nodes = element.nodes;
 
-        // TODO find a simpler way to express htis
+        // TODO find a simpler way to express this
         if (nodes.length == 1 &&
             nodes.first is dom.Element &&
             (nodes.first as dom.Element).localName == 'br') {
@@ -425,7 +415,6 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         return delta;
       }
     } else if (htmlNode is dom.Text) {
-      print('$htmlNode is Text');
       // The html node is text
       dom.Text text = htmlNode;
 

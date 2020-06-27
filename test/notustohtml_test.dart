@@ -2,709 +2,399 @@ import 'package:quill_delta/quill_delta.dart';
 import 'package:test/test.dart';
 import 'package:notustohtml/notustohtml.dart';
 import 'package:notus/notus.dart';
-import 'package:meta/meta.dart';
 
 void main() {
   final converter = NotusHtmlCodec();
 
-  group('Encode', () {
-    void compare(Delta delta, String expectedHtml) {
+  void testEncoder(Delta delta, String html) {
+    test('[Encode]', () {
       // Asserts that the delta can be used to create a valid document
       NotusDocument.fromDelta(delta);
       final actualHtml = converter.encode(delta);
-      expect(actualHtml, expectedHtml);
-    }
+      expect(actualHtml, html);
+    });
+  }
 
-    @isTest
-    void testEncoder(String name, Delta delta, String expectedHtml) {
-      test(name, () {
-        compare(delta, expectedHtml);
-      });
-    }
+  void testDecoder(String html, Delta delta) {
+    test('[Decode]', () {
+      // Asserts that the delta can be used to create a valid document
+      NotusDocument.fromDelta(delta);
+      final actualDelta = converter.decode(html);
+      NotusDocument.fromDelta(actualDelta);
+      expect(actualDelta, delta);
+    });
+  }
 
-    group('Basic text', () {
-      testEncoder(
-        'Plain paragraph',
-        Delta()..insert('Hello World!\n'),
-        '<p>Hello World!</p>',
-      );
-      test("Multi-line paragraph 1", () {
-        final NotusDocument doc = NotusDocument.fromJson([
-          {"insert": "Hello World!\nSecond line!\n"}
-        ]);
+  void testConverter(String html, Delta delta) {
+    testEncoder(delta, html);
+    testDecoder(html, delta);
+  }
 
-        expect(
-          converter.encode(doc.toDelta()),
-          '<p>Hello World!</p><p>Second line!</p>',
-        );
-      });
-      test("Multi-line paragraph 2", () {
-        final NotusDocument doc = NotusDocument.fromJson([
-          {"insert": "Hello World!\n\nSecond line!\n"}
-        ]);
+  group('Basic text', () {
+    group('Plain paragraph', () {
+      final html = '<p>Hello World!</p>';
 
-        expect(
-          converter.encode(doc.toDelta()),
-          '<p>Hello World!</p>' '<p><br></p>' '<p>Second line!</p>',
-        );
-      });
+      final delta = Delta()..insert('Hello World!\n');
 
-      test("Bold paragraph", () {
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!\n",
-            "attributes": {"b": true}
-          }
-        ]);
-
-        expect(
-          converter.encode(doc.toDelta()),
-          "<p><strong>Hello World!</strong></p>",
-        );
-      });
-
-      test("Italic paragraph", () {
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!\n",
-            "attributes": {"i": true}
-          }
-        ]);
-
-        expect(converter.encode(doc.toDelta()), "<p><em>Hello World!</em></p>");
-      });
-
-      test("Bold and Italic paragraph", () {
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!\n",
-            "attributes": {"i": true, "b": true}
-          }
-        ]);
-
-        expect(
-          converter.encode(doc.toDelta()),
-          "<p><em><strong>Hello World!</strong></em></p>",
-        );
-      });
+      testConverter(html, delta);
     });
 
-    group('Headings', () {
-      testEncoder(
-        '1',
-        Delta()..insert('Hello World!')..insert('\n', {'heading': 1}),
-        '<h1>Hello World!</h1>',
-      );
+    group('Bold paragraph(strong)', () {
+      final html = '<p><strong>Hello World!</strong></p>';
 
-      testEncoder(
-        '2',
-        Delta()..insert('Hello World!')..insert('\n', {'heading': 2}),
-        '<h2>Hello World!</h2>',
-      );
+      final delta = Delta()..insert('Hello World!\n', {'b': true});
 
-      testEncoder(
-        '3',
-        Delta()..insert('Hello World!')..insert('\n', {'heading': 3}),
-        '<h3>Hello World!</h3>',
-      );
-
-      testEncoder(
-        'In list',
-        Delta()
-          ..insert('Hello World!')
-          ..insert('\n', {'heading': 1, 'block': 'ul'}),
-        '<ul><li><h1>Hello World!</h1></li></ul>',
-      );
+      testConverter(html, delta);
     });
 
-    group('Blocks', () {
-      test(
-        "Quote",
-        () {
-          final NotusDocument doc = NotusDocument.fromJson([
-            {"insert": "Hello World!"},
-            {
-              "insert": "\n",
-              "attributes": {"block": "quote"}
-            }
-          ]);
+    group('Bold paragraph(b)', () {
+      final encodeHtml = '<p><strong>Hello World!</strong></p>';
+      final decodeHtml = '<p><b>Hello World!</b></p>';
 
-          expect(converter.encode(doc.toDelta()),
-              "<p><blockquote>Hello World!</blockquote></p>");
-        },
-        skip: true,
-      );
-      test(
-        "Code",
-        () {
-          final NotusDocument doc = NotusDocument.fromJson([
-            {"insert": "Hello World!"},
-            {
-              "insert": "\n",
-              "attributes": {"block": "code"}
-            }
-          ]);
+      final delta = Delta()..insert('Hello World!\n', {'b': true});
 
-          expect(converter.encode(doc.toDelta()),
-              "<p><code>Hello World!</code></p>");
-        },
-        skip: true,
-      );
-      test("Ordered list", () {
-        final NotusDocument doc = NotusDocument.fromJson([
-          {"insert": "Hello World!"},
-          {
-            "insert": "\n",
-            "attributes": {"block": "ol"}
-          }
-        ]);
-
-        expect(converter.encode(doc.toDelta()),
-            "<p><ol><li>Hello World!</li></ol></p>");
-      });
-      test("List with bold", () {
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!",
-            "attributes": {"b": true}
-          },
-          {
-            "insert": "\n",
-            "attributes": {"block": "ol"}
-          }
-        ]);
-
-        expect(converter.encode(doc.toDelta()),
-            "<p><ol><li><strong>Hello World!</strong></li></ol></p>");
-      });
-      test("Unordered list", () {
-        final NotusDocument doc = NotusDocument.fromJson([
-          {"insert": "Hello World!"},
-          {
-            "insert": "\n",
-            "attributes": {"block": "ul"}
-          },
-          {"insert": "Hello World!"},
-          {
-            "insert": "\n",
-            "attributes": {"block": "ul"}
-          }
-        ]);
-
-        expect(converter.encode(doc.toDelta()),
-            "<p><ul><li>Hello World!</li><li>Hello World!</li></ul></p>");
-      });
+      testEncoder(delta, encodeHtml);
+      testDecoder(decodeHtml, delta);
     });
 
-    group(
-      'Embeds',
-      () {
-        test("Image", () {
-          final NotusDocument doc = NotusDocument.fromJson([
-            {
-              "insert": "",
-              "attributes": {
-                "embed": {
-                  "type": "image",
-                  "source": "http://fake.link/image.png",
-                },
-              },
-            },
-            {"insert": "\n"}
-          ]);
+    group('Italic paragraph(em)', () {
+      final html = '<p><em>Hello World!</em></p>';
 
-          expect(converter.encode(doc.toDelta()),
-              '<p><img src="http://fake.link/image.png"></p>');
-        });
-        test("Horizontal rule", () {
-          final NotusDocument doc = NotusDocument.fromJson([
-            {
-              "insert": "",
-              "attributes": {
-                "embed": {
-                  "type": "hr",
-                },
-              },
-            },
-            {"insert": "\n"}
-          ]);
+      final delta = Delta()..insert('Hello World!\n', {'i': true});
 
-          expect(converter.encode(doc.toDelta()), "<p><hr></p>");
-        });
-      },
-      skip: true,
-    );
+      testConverter(html, delta);
+    });
+    group('Italic paragraph(i)', () {
+      final encodeHtml = '<p><em>Hello World!</em></p>';
+      final decodeHtml = '<p><i>Hello World!</i></p>';
 
-    group(
-      'Links',
-      () {
-        test("Plain", () {
-          final delta = Delta()
-            ..insert('Hello World!\n', {'a': 'http://fake.link'});
+      final delta = Delta()..insert('Hello World!\n', {'i': true});
 
-          expect(
-            converter.encode(delta),
-            '<p><a href="http://fake.link">Hello World!</a></p>',
-          );
-        });
+      testEncoder(delta, encodeHtml);
+      testDecoder(decodeHtml, delta);
+    });
 
-        test("Italic", () {
-          final delta = Delta()
-            ..insert('Hello World!\n', {'a': 'http://fake.link', 'i': true});
+    group('Bold and Italic paragraph', () {
+      final encodeHtml =
+          '<p><em><strong>Hello World!</strong></em> <em><strong>How are you?</strong></em></p>';
+      final decodeHtml =
+          '<p><em><strong>Hello World!</strong></em> <i><b>How are you?</b></i></p>';
 
-          expect(
-            converter.encode(delta),
-            '<p><a href=\"http://fake.link\"><em>Hello World!</em></a></p>',
-          );
-        });
+      final delta = Delta()
+        ..insert('Hello World!', {'i': true, 'b': true})
+        ..insert(' ')
+        ..insert('How are you?\n', {'i': true, 'b': true});
 
-        test("In list", () {
-          final delta = Delta()
-            ..insert('Hello World!', {'a': 'http://fake.link'})
-            ..insert('\n', {'block': 'ul'});
+      testEncoder(delta, encodeHtml);
+      testDecoder(decodeHtml, delta);
+    });
 
-          expect(
-            converter.encode(delta),
-            '<p><ul><li><a href="http://fake.link">Hello World!</a></li></ul></p>',
-          );
-        });
-      },
-    );
+    group('Bold then Italic paragraph', () {
+      final html = '<p><strong>Hello</strong> <em>World</em></p>';
 
-    test('integration test', () {
-      final Delta delta = Delta()
-        ..insert('Plain text\n')
-        ..insert('Bold text\n', {'b': true})
-        ..insert('Italic text\n', {'i': true})
-        ..insert('Heading 1')
-        ..insert('\n', {'heading': 1})
-        ..insert('\nUnordered')
-        ..insert('\n', {'block': 'ul'})
-        ..insert('List')
-        ..insert('\n', {'block': 'ul'})
-        ..insert('Ordered')
-        ..insert('\n', {'block': 'ol'})
-        ..insert('List')
-        ..insert('\n', {'block': 'ol'});
+      final delta = Delta()
+        ..insert('Hello', {'b': true})
+        ..insert(' ')
+        ..insert('World\n', {'i': true});
 
-      final String html = '<p>Plain text</p>'
-          '<p><strong>Bold text</strong></p>'
-          '<p><em>Italic text</em></p>'
-          '<h1>Heading 1</h1>'
-          '<p><br></p>'
-          '<ul>'
-          '<li>Unordered</li>'
-          '<li>List</li>'
-          '</ul>'
-          '<ol>'
-          '<li>Ordered</li>'
-          '<li>List</li>'
-          '</ol>';
-
-      compare(delta, html);
+      testConverter(html, delta);
     });
   });
 
-  group('Decode', () {
-    void compare(String html, Delta expectedDelta) {
-      // Asserts that the delta can be used to create a valid document
-      NotusDocument.fromDelta(expectedDelta);
-      final actualDelta = converter.decode(html);
-      NotusDocument.fromDelta(actualDelta);
-      expect(actualDelta, expectedDelta);
-    }
+  group('multi-line text', () {
+    group('two lines', () {
+      final html = '<p>Hello</p><p>World</p>';
 
-    group('Basic text', () {
-      test('Plain paragraph', () {
-        final String html = "<p>Hello World!</p>";
+      final delta = Delta()..insert('Hello\nWorld\n');
 
-        final delta = Delta()..insert('Hello World!\n');
+      testConverter(html, delta);
+    });
+    group('three lines', () {
+      final html = '<p>The</p><p>quick</p><p>brown</p>';
 
-        compare(html, delta);
-      });
+      final delta = Delta()..insert('The\nquick\nbrown\n');
 
-      test("Bold paragraph(strong)", () {
-        final String html = "<p><strong>Hello World!</strong></p>";
-        final NotusDocument expected = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!\n",
-            "attributes": {"b": true}
-          }
-        ]);
-        final Delta result = converter.decode(html);
-
-        expect(result, expected.toDelta());
-      });
-
-      test("Bold paragraph(b)", () {
-        final String html = "<p><b>Hello World!</b></p>";
-        final NotusDocument expected = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!\n",
-            "attributes": {"b": true}
-          }
-        ]);
-        final Delta result = converter.decode(html);
-
-        expect(result, expected.toDelta());
-      });
-
-      test("Italic paragraph(em)", () {
-        final String html = "<p><em>Hello World!</em></p>";
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!\n",
-            "attributes": {"i": true}
-          }
-        ]);
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-      test("Italic paragraph(i)", () {
-        final String html = "<p><i>Hello World!</i></p>";
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!\n",
-            "attributes": {"i": true}
-          }
-        ]);
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-
-      test("Bold and Italic paragraph", () {
-        final String html =
-            "<p><em><strong>Hello World!</strong></em> <i><b>How are you?</b></i></p>";
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!",
-            "attributes": {"i": true, "b": true}
-          },
-          {"insert": " "},
-          {
-            "insert": "How are you?\n",
-            "attributes": {"i": true, "b": true}
-          },
-        ]);
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-
-      test('Bold then Italic paragraph', () {
-        final String html = '<p><strong>Hello</strong> <em>World</em></p>';
-        final delta = Delta()
-          ..insert('Hello', {'b': true})
-          ..insert(' ')
-          ..insert('World\n', {'i': true});
-
-        compare(html, delta);
-      });
+      testConverter(html, delta);
     });
 
-    group('multi-line text', () {
-      test('two lines', () {
-        final String html = '<p>Hello</p><p>World</p>';
-        final delta = Delta()..insert('Hello\nWorld\n');
+    group('empty line', () {
+      final html = '<p><br></p>';
 
-        compare(html, delta);
-      });
-      test('three lines', () {
-        final String html = '<p>The</p><p>quick</p><p>brown</p>';
-        final delta = Delta()..insert('The\nquick\nbrown\n');
+      final delta = Delta()..insert('\n\n');
 
-        compare(html, delta);
-      });
+      testConverter(html, delta);
+    });
+    group('two empty lines', () {
+      final html = '<p><br></p><p><br></p>';
 
-      test('empty line', () {
-        final html = '<p><br></p>';
-        final delta = Delta()..insert('\n\n');
-        compare(html, delta);
-      });
-      test('two empty lines', () {
-        final html = '<p><br></p><p><br></p>';
-        final delta = Delta()..insert('\n\n\n');
-        compare(html, delta);
-      });
+      final delta = Delta()..insert('\n\n\n');
+      testConverter(html, delta);
+    });
+  });
+
+  group('Headings', () {
+    group('1', () {
+      final html = '<h1>Hello World!</h1>';
+
+      final delta = Delta()
+        ..insert('Hello World!')
+        ..insert('\n', {'heading': 1});
+
+      testConverter(html, delta);
     });
 
-    group('Headings', () {
-      test("1", () {
-        final String html = "<h1>Hello World!</h1>";
-        final delta = Delta()
-          ..insert('Hello World!')
-          ..insert('\n', {'heading': 1});
+    group('2', () {
+      final html = '<h2>Hello World!</h2>';
 
-        compare(html, delta);
-      });
+      final delta = Delta()
+        ..insert('Hello World!')
+        ..insert('\n', {'heading': 2});
 
-      test("2", () {
-        final String html = "<h2>Hello World!</h2>";
-        final delta = Delta()
-          ..insert('Hello World!')
-          ..insert('\n', {'heading': 2});
-
-        compare(html, delta);
-      });
-
-      test("3", () {
-        final String html = "<h3>Hello World!</h3>";
-        final delta = Delta()
-          ..insert('Hello World!')
-          ..insert('\n', {'heading': 3});
-
-        compare(html, delta);
-      });
+      testConverter(html, delta);
     });
 
-    group('Blocks', () {
-      test(
-        "Quote",
-        () {
-          final String html = "<blockquote>Hello World!</blockquote>";
+    group('3', () {
+      final html = '<h3>Hello World!</h3>';
 
-          final delta = Delta()
-            ..insert('Hello World!')
-            ..insert('\n', {'block': 'quote'});
+      final delta = Delta()
+        ..insert('Hello World!')
+        ..insert('\n', {'heading': 3});
 
-          compare(html, delta);
-        },
-      );
+      testConverter(html, delta);
+    });
+  });
 
-      test(
-        "Code",
-        () {
-          final String html = "<code>Hello World!</code>";
-          final NotusDocument doc = NotusDocument.fromJson([
-            {"insert": "Hello World!"},
-            {
-              "insert": "\n",
-              "attributes": {"block": "code"}
-            }
-          ]);
-
-          expect(converter.decode(html), doc.toDelta());
-        },
-      );
-      test("Ordered list 1", () {
-        final String html = '<p><ol><li>Hello World!</li></ol></p>';
+  group('Blocks', () {
+    group(
+      'Quote',
+      () {
+        final html = '<blockquote>Hello World!</blockquote>';
 
         final delta = Delta()
           ..insert('Hello World!')
-          ..insert('\n', {'block': 'ol'});
+          ..insert('\n', {'block': 'quote'});
 
-        compare(html, delta);
-      });
-      test("Ordered list 2", () {
-        // Lists that don't start on the first line shouldn't be wrapped in p tags
-        // TODO address this in the decoder
-        final String html = '<p>Line 1</p>' '<ol><li>Hello World!</li></ol>';
+        testConverter(html, delta);
+      },
+    );
+
+    group(
+      'Code',
+      () {
+        final html = '<code>Hello World!</code>';
 
         final delta = Delta()
-          ..insert('Line 1\n')
           ..insert('Hello World!')
-          ..insert('\n', {'block': 'ol'});
+          ..insert('\n', {'block': 'code'});
 
-        compare(html, delta);
-      });
+        testConverter(html, delta);
+      },
+    );
+    group('Ordered list 1', () {
+      // Valid html
+      final encodeHtml = '<ol><li>Hello World!</li></ol>';
+      // Invalid but expected html
+      final decodeHtml = '<p><ol><li>Hello World!</li></ol></p>';
 
-      test("List with bold", () {
-        final String html = "<ol><li><strong>Hello World!</strong></li></ol>";
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!",
-            "attributes": {"b": true}
-          },
-          {
-            "insert": "\n",
-            "attributes": {"block": "ol"}
-          }
-        ]);
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-      test("Unordered list", () {
-        final String html =
-            "<ul><li>Hello World!</li><li>Hello World!</li></ul>";
-        final NotusDocument doc = NotusDocument.fromJson([
-          {"insert": "Hello World!"},
-          {
-            "insert": "\n",
-            "attributes": {"block": "ul"}
-          },
-          {"insert": "Hello World!"},
-          {
-            "insert": "\n",
-            "attributes": {"block": "ul"}
-          }
-        ]);
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-    });
-
-    group('Embeds', () {
-      test("Image", () {
-        final String html = "<img src=\"http://fake.link/image.png\">";
-        final delta = Delta()..insert("\n");
-        NotusDocument tempdocument = NotusDocument.fromDelta(delta);
-        var index = tempdocument.length;
-        tempdocument.format(index - 1, 0,
-            NotusAttribute.embed.image("http://fake.link/image.png"));
-        final NotusDocument doc = tempdocument;
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-      test("Line", () {
-        final String html = "<hr>";
-        final delta = Delta()..insert("\n");
-        NotusDocument tempdocument = NotusDocument.fromDelta(delta);
-        var index = tempdocument.length;
-        tempdocument.format(index - 1, 0, NotusAttribute.embed.horizontalRule);
-        final NotusDocument doc = tempdocument;
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-    });
-
-    group('Links', () {
-      test("Plain", () {
-        final String html = "<a href=\"http://fake.link\">Hello World!</a>";
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!",
-            "attributes": {"a": "http://fake.link"},
-          },
-          {"insert": "\n"}
-        ]);
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-
-      test("Italic", () {
-        final String html =
-            "<a href=\"http://fake.link\"><em>Hello World!</em></a>";
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!",
-            "attributes": {"a": "http://fake.link", "i": true},
-          },
-          {"insert": "\n"}
-        ]);
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-
-      test("In list", () {
-        final String html =
-            '<ul><li><a href="http://fake.link">Hello World!</a></li></ul>';
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            "insert": "Hello World!",
-            "attributes": {"a": "http://fake.link"},
-          },
-          {
-            "insert": "\n",
-            "attributes": {"block": "ul"},
-          }
-        ]);
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-    });
-
-    group('nested inline styles', () {
-      test('bold in italic', () {
-        final String html = '<p><em>Hello <strong>World!</strong></em></p>';
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            'insert': 'Hello ',
-            'attributes': {'i': true},
-          },
-          {
-            'insert': 'World!\n',
-            'attributes': {'i': true, 'b': true},
-          },
-        ]);
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-      test('bold in italic 2', () {
-        final String html = '<p><em>The <strong>quick</strong> brown</em></p>';
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            'insert': 'The ',
-            'attributes': {'i': true},
-          },
-          {
-            'insert': 'quick',
-            'attributes': {'i': true, 'b': true},
-          },
-          {
-            'insert': ' brown\n',
-            'attributes': {'i': true},
-          },
-        ]);
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-      test('bold in italic 3', () {
-        final String html =
-            '<p><em>The <strong>quick</strong> <strong>brown</strong></em></p>';
-        final NotusDocument doc = NotusDocument.fromJson([
-          {
-            'insert': 'The ',
-            'attributes': {'i': true},
-          },
-          {
-            'insert': 'quick',
-            'attributes': {'i': true, 'b': true},
-          },
-          {
-            'insert': ' ',
-            'attributes': {'i': true},
-          },
-          {
-            'insert': 'brown\n',
-            'attributes': {'i': true, 'b': true},
-          },
-        ]);
-
-        expect(converter.decode(html), doc.toDelta());
-      });
-    });
-
-    test('integration test', () {
-      final String html = '<p>Plain text</p>'
-          '<p><strong>Bold text</strong></p>'
-          '<p><em>Italic text</em></p>'
-          '<h1>Heading 1</h1>'
-          '<p><br></p>'
-          '<ul>'
-          '<li>Unordered</li>'
-          '<li>List</li>'
-          '</ul>'
-          '<ol>'
-          '<li>Ordered</li>'
-          '<li>List</li>'
-          '</ol>';
-
-      final Delta delta = Delta()
-        ..insert('Plain text\n')
-        ..insert('Bold text\n', {'b': true})
-        ..insert('Italic text\n', {'i': true})
-        ..insert('Heading 1')
-        ..insert('\n', {'heading': 1})
-        ..insert('\nUnordered')
-        ..insert('\n', {'block': 'ul'})
-        ..insert('List')
-        ..insert('\n', {'block': 'ul'})
-        ..insert('Ordered')
-        ..insert('\n', {'block': 'ol'})
-        ..insert('List')
+      final delta = Delta()
+        ..insert('Hello World!')
         ..insert('\n', {'block': 'ol'});
 
-      compare(html, delta);
+      testEncoder(delta, encodeHtml);
+      testDecoder(decodeHtml, delta);
     });
+    group('Ordered list 2', () {
+      final html = '<p>Line 1</p>' '<ol><li>Hello World!</li></ol>';
+
+      final delta = Delta()
+        ..insert('Line 1\n')
+        ..insert('Hello World!')
+        ..insert('\n', {'block': 'ol'});
+
+      testConverter(html, delta);
+    });
+
+    group('List with bold', () {
+      final html = '<ol><li><strong>Hello World!</strong></li></ol>';
+
+      final delta = Delta()
+        ..insert('Hello World!', {'b': true})
+        ..insert('\n', {'block': 'ol'});
+
+      testConverter(html, delta);
+    });
+    group('Unordered list', () {
+      final html = '<ul><li>Hello World!</li><li>Hello World!</li></ul>';
+
+      final delta = Delta()
+        ..insert('Hello World!')
+        ..insert('\n', {'block': 'ul'})
+        ..insert('Hello World!')
+        ..insert('\n', {'block': 'ul'});
+
+      testConverter(html, delta);
+    });
+  });
+
+  group('Embeds', () {
+    group('Image', () {
+      final html = '<img src="http://fake.link/image.png">';
+      final delta = Delta()..insert('\n');
+      final document = NotusDocument.fromDelta(delta);
+      var index = document.length;
+      document.format(index - 1, 0,
+          NotusAttribute.embed.image('http://fake.link/image.png'));
+
+      testConverter(html, document.toDelta());
+    });
+    group('Line', () {
+      final html = '<hr>';
+      final delta = Delta()..insert('\n');
+      final document = NotusDocument.fromDelta(delta);
+      var index = document.length;
+      document.format(index - 1, 0, NotusAttribute.embed.horizontalRule);
+
+      testConverter(html, document.toDelta());
+    });
+  });
+
+  group('Links', () {
+    group('Plain', () {
+      final html = '<a href=\'http://fake.link\'>Hello World!</a>';
+      final NotusDocument doc = NotusDocument.fromJson([
+        {
+          'insert': 'Hello World!',
+          'attributes': {'a': 'http://fake.link'},
+        },
+        {'insert': '\n'}
+      ]);
+
+      testConverter(html, doc.toDelta());
+    });
+
+    group('Italic', () {
+      final html = '<a href=\'http://fake.link\'><em>Hello World!</em></a>';
+      final NotusDocument doc = NotusDocument.fromJson([
+        {
+          'insert': 'Hello World!',
+          'attributes': {'a': 'http://fake.link', 'i': true},
+        },
+        {'insert': '\n'}
+      ]);
+
+      testConverter(html, doc.toDelta());
+    });
+
+    group('In list', () {
+      final html =
+          '<ul><li><a href="http://fake.link">Hello World!</a></li></ul>';
+      final NotusDocument doc = NotusDocument.fromJson([
+        {
+          'insert': 'Hello World!',
+          'attributes': {'a': 'http://fake.link'},
+        },
+        {
+          'insert': '\n',
+          'attributes': {'block': 'ul'},
+        }
+      ]);
+
+      testConverter(html, doc.toDelta());
+    });
+  });
+
+  group('nested inline styles', () {
+    group('bold in italic', () {
+      final html = '<p><em>Hello <strong>World!</strong></em></p>';
+      final NotusDocument doc = NotusDocument.fromJson([
+        {
+          'insert': 'Hello ',
+          'attributes': {'i': true},
+        },
+        {
+          'insert': 'World!\n',
+          'attributes': {'i': true, 'b': true},
+        },
+      ]);
+
+      testConverter(html, doc.toDelta());
+    });
+    group('bold in italic 2', () {
+      final html = '<p><em>The <strong>quick</strong> brown</em></p>';
+      final NotusDocument doc = NotusDocument.fromJson([
+        {
+          'insert': 'The ',
+          'attributes': {'i': true},
+        },
+        {
+          'insert': 'quick',
+          'attributes': {'i': true, 'b': true},
+        },
+        {
+          'insert': ' brown\n',
+          'attributes': {'i': true},
+        },
+      ]);
+
+      testConverter(html, doc.toDelta());
+    });
+    group('bold in italic 3', () {
+      final html =
+          '<p><em>The <strong>quick</strong> <strong>brown</strong></em></p>';
+      final NotusDocument doc = NotusDocument.fromJson([
+        {
+          'insert': 'The ',
+          'attributes': {'i': true},
+        },
+        {
+          'insert': 'quick',
+          'attributes': {'i': true, 'b': true},
+        },
+        {
+          'insert': ' ',
+          'attributes': {'i': true},
+        },
+        {
+          'insert': 'brown\n',
+          'attributes': {'i': true, 'b': true},
+        },
+      ]);
+
+      testConverter(html, doc.toDelta());
+    });
+  });
+
+  group('integration test', () {
+    final html = '<p>Plain text</p>'
+        '<p><strong>Bold text</strong></p>'
+        '<p><em>Italic text</em></p>'
+        '<h1>Heading 1</h1>'
+        '<p><br></p>'
+        '<ul>'
+        '<li>Unordered</li>'
+        '<li>List</li>'
+        '</ul>'
+        '<ol>'
+        '<li>Ordered</li>'
+        '<li>List</li>'
+        '</ol>';
+
+    final Delta delta = Delta()
+      ..insert('Plain text\n')
+      ..insert('Bold text\n', {'b': true})
+      ..insert('Italic text\n', {'i': true})
+      ..insert('Heading 1')
+      ..insert('\n', {'heading': 1})
+      ..insert('\nUnordered')
+      ..insert('\n', {'block': 'ul'})
+      ..insert('List')
+      ..insert('\n', {'block': 'ul'})
+      ..insert('Ordered')
+      ..insert('\n', {'block': 'ol'})
+      ..insert('List')
+      ..insert('\n', {'block': 'ol'});
+
+    testConverter(html, delta);
   });
 }
 
