@@ -1,5 +1,6 @@
 library notustohtml;
 
+import 'dart:collection';
 import 'dart:convert';
 
 import 'package:html/dom.dart' as dom;
@@ -20,6 +21,194 @@ class NotusHtmlCodec extends Codec<Delta, String> {
 
 /// Delta -> HTML
 class _NotusHtmlEncoder extends Converter<Delta, String> {
+  static const kBold = 'strong';
+  static const kItalic = 'em';
+  static const kParagraph = 'p';
+  static const kLineBreak = 'br';
+  static const kHeading1 = 'h1';
+  static const kHeading2 = 'h2';
+  static const kHeading3 = 'h3';
+  static const kListItem = 'li';
+  static const kUnorderedList = 'ul';
+  static const kOrderedList = 'ol';
+  static const kCode = 'code';
+  static const kQuote = 'blockquote';
+
+  final LinkedHashSet<String> openTags = LinkedHashSet<String>();
+
+  StringBuffer htmlBuffer;
+
+  @override
+  String convert(Delta input) {
+    htmlBuffer = StringBuffer();
+    final LinkedList<Node> nodes = NotusDocument.fromDelta(input).root.children;
+
+    nodes.forEach(_parseNode);
+
+    return htmlBuffer.toString();
+  }
+
+  void _parseNode(Node node) {
+    if (node is LineNode) {
+      _parseLineNode(node);
+    } else if (node is BlockNode) {
+      _parseBlockNode(node);
+    } else {
+      throw UnsupportedError(
+        '$node is not supported by _NotusHtmlEncoder._parseNode',
+      );
+    }
+  }
+
+  /// Assumes that the style contains a heading
+  String _getHeadingTag(NotusStyle style) {
+    final level = style.value<int>(NotusAttribute.heading);
+    switch (level) {
+      case 1:
+        return kHeading1;
+      case 2:
+        return kHeading2;
+      case 3:
+        return kHeading3;
+      default:
+        throw UnsupportedError(
+          'Unsupported heading level: $level, does your style contain a heading'
+          ' attribute?',
+        );
+    }
+  }
+
+  void _parseLineNode(LineNode node) {
+    final bool isHeading = node.style.contains(NotusAttribute.heading);
+    final bool isList = node.style.containsSame(NotusAttribute.ul) ||
+        node.style.containsSame(NotusAttribute.ol);
+    final bool isNewLine =
+        node.isEmpty && node.style.isEmpty && node.next != null;
+
+    // Opening heading/paragraph tag
+    String tag;
+    if (isHeading) {
+      tag = _getHeadingTag(node.style);
+    } else if (isList) {
+      tag = kListItem;
+    } else {
+      tag = kParagraph;
+      // throw UnsupportedError('Unsupported LineNode style: ${node.style}');
+    }
+
+    if (isNewLine) {
+      _writeTag(kParagraph);
+      _writeTag(kLineBreak);
+      _writeTag(kParagraph, close: true);
+    } else if (node.isNotEmpty) {
+      _writeTag(tag);
+      node.children.cast<LeafNode>().forEach(_parseLeafNode);
+      _writeTag(tag, close: true);
+    }
+  }
+
+  void _parseBlockNode(BlockNode node) {
+    String tag;
+    if (node.style.containsSame(NotusAttribute.ul)) {
+      tag = kUnorderedList;
+    } else if (node.style.containsSame(NotusAttribute.ol)) {
+      tag = kOrderedList;
+    } else if (node.style.containsSame(NotusAttribute.code)) {
+      tag = kCode;
+    } else if (node.style.containsSame(NotusAttribute.bq)) {
+      tag = kQuote;
+    } else {
+      throw UnsupportedError('Unsupported BlockNode: $node');
+    }
+    _writeTag(tag);
+    node.children.cast<LineNode>().forEach(_parseLineNode);
+    _writeTag(tag, close: true);
+  }
+
+  void _parseLeafNode(LeafNode node) {
+    bool isBold(LeafNode node) =>
+        node.style?.containsSame(NotusAttribute.bold) ?? false;
+    bool isItalic(LeafNode node) =>
+        node.style?.containsSame(NotusAttribute.italic) ?? false;
+
+    if (node is TextNode) {
+      // Open style tag if `node.prev` doesn't contain it but `node` does
+      // Write text
+      // Close style tag if node.next doesn't contain it but `node` does
+
+      final LeafNode previousNode = node.previous;
+      final LeafNode nextNode = node.next;
+
+      // TODO check if I should only check for previous textNodes?
+      final previousNodeHasStyle = (previousNode?.style?.isNotEmpty ?? false);
+      final nextNodeHasStyle = (nextNode?.style?.isNotEmpty ?? false);
+
+      // Open styles
+      final Set<String> tagsToOpen = {};
+      if (isBold(node) && (!previousNodeHasStyle || !isBold(previousNode))) {
+        // First LeafNode in the LineNode that is bold
+        tagsToOpen.add(kBold);
+      }
+      if (isItalic(node) &&
+          // First LeafNode in the LineNode that is italic
+          (!previousNodeHasStyle || !isItalic(previousNode))) {
+        tagsToOpen.add(kItalic);
+      }
+
+      if (tagsToOpen.isNotEmpty) _writeTagsOrdered(tagsToOpen);
+
+      // Write the content
+      htmlBuffer.write(node.value);
+
+      // Close styles
+      final Set<String> tagsToClose = {};
+      if (isItalic(node) && (!nextNodeHasStyle || !isItalic(nextNode))) {
+        // Last LeafNode in the LineNode that is italic
+        tagsToClose.add(kItalic);
+      }
+      if (isBold(node) && (!nextNodeHasStyle || !isBold(nextNode))) {
+        // Last LeafNode in the LineNode that is bold
+        tagsToClose.add(kBold);
+      }
+      if (tagsToClose.isNotEmpty) _writeTagsOrdered(tagsToClose);
+    } else if (node is EmbedNode) {
+      // TODO add EmbedNode support
+    } else {
+      throw 'Unsupported LeafNode';
+    }
+  }
+
+  void _writeTag(String tag, {bool close = false}) {
+    // and storing the current order of open tags so they can be
+    // closed in the correct order
+    htmlBuffer.write(close ? '</$tag>' : '<$tag>');
+  }
+
+  /// Takes a set of tags that and opens them if they're unopened otherwise
+  /// it closes them in the reverse order they were opened in.
+  /// This should only be used for tags with the same heirarchy e.g.
+  /// bold/italic/link and not headings, paragraphs, line breaks etc
+  void _writeTagsOrdered(Set<String> tags) {
+    /// Close tags from [tags] if they are open
+    List<String>.from(openTags.toList().reversed).forEach((tag) {
+      if (tags.contains(tag)) {
+        // Remove this tag
+        openTags.remove(tag);
+        tags.remove(tag);
+        _writeTag(tag, close: true);
+      }
+    });
+
+    /// The remaining [tags] need to be opened
+    tags.forEach((tag) {
+      _writeTag(tag);
+      openTags.add(tag);
+    });
+  }
+}
+
+/// Delta -> HTML
+class _NotusHtmlEncoderOld extends Converter<Delta, String> {
   static const kBold = 'strong';
   static const kItalic = 'em';
   static final kSimpleBlocks = <NotusAttribute, String>{
@@ -293,18 +482,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     );
 
     /// Converts each HTML node to a [Delta]
-    htmlNodes.asMap().forEach((int index, dom.Node htmlNode) {
-      dom.Node nextNode;
-
-      /// If the current node isn't the final node then initialise [next] as the
-      /// next node
-      if (index + 1 < htmlNodes.length) {
-        nextNode = htmlNodes[index + 1];
-      }
-
-      // TODO Could this use delta.insert?
-      delta = _parseNode(htmlNode, delta, nextNode);
-    });
+    htmlNodes.forEach((htmlNode) => delta = _parseNode(htmlNode, delta));
 
     return delta;
   }
@@ -330,8 +508,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
 
   Delta _parseNode(
     dom.Node htmlNode,
-    Delta delta,
-    dom.Node nextHtmlNode, {
+    Delta delta, {
     bool inList,
     Map<String, dynamic> parentAttributes,
     Map<String, dynamic> parentBlockAttributes,
@@ -350,7 +527,6 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
             child,
             delta,
             listType: "ul",
-            next: nextHtmlNode,
             inList: inList,
             parentAttributes: attributes,
             parentBlockAttributes: blockAttributes,
@@ -364,7 +540,6 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
             child,
             delta,
             listType: "ol",
-            next: nextHtmlNode,
             inList: inList,
             parentAttributes: attributes,
             parentBlockAttributes: blockAttributes,
@@ -387,7 +562,6 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
             delta = _parseNode(
               nodes[i],
               delta,
-              nextHtmlNode,
               parentAttributes: attributes,
               parentBlockAttributes: blockAttributes,
             );
@@ -407,7 +581,6 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         delta = _parseElement(
           element,
           delta,
-          next: nextHtmlNode,
           inList: inList,
           parentAttributes: attributes,
           parentBlockAttributes: blockAttributes,
@@ -418,18 +591,10 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       // The html node is text
       dom.Text text = htmlNode;
 
-      if (nextHtmlNode is dom.Element &&
-          (nextHtmlNode.localName == 'br' || nextHtmlNode.localName == 'p')) {
-        delta.insert(
-          '${text.text}\n',
-          attributes.isNotEmpty ? attributes : null,
-        );
-      } else {
-        delta.insert(
-          text.text,
-          attributes.isNotEmpty ? attributes : null,
-        );
-      }
+      delta.insert(
+        text.text,
+        attributes.isNotEmpty ? attributes : null,
+      );
       return delta;
     } else {
       // The html node isn't an element or text e.g. if it's a comment
@@ -443,7 +608,6 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     Map<String, dynamic> parentAttributes,
     Map<String, dynamic> parentBlockAttributes,
     String listType,
-    @required dom.Node next,
     // bool addTrailingLineBreak = false,
     @required bool inList,
   }) {
@@ -472,14 +636,9 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         blockAttributes["heading"] = 3;
       }
       element.nodes.asMap().forEach((index, node) {
-        dom.Node next;
-        // Initialise `next` if possible
-        if (index + 1 < element.nodes.length) next = element.nodes[index + 1];
-
         delta = _parseNode(
           node,
           delta,
-          next,
           inList: element.localName == "li",
           parentAttributes: attributes,
           parentBlockAttributes: blockAttributes,
@@ -531,44 +690,19 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
               element.text,
               attributes.isNotEmpty ? attributes : null,
             );
-          /* // If the next node is a br/p node then add a new line
-          // TODO sometimes
-          if (next is dom.Element &&
-              (next.localName == "br" || next.localName == "p")) {
-            delta
-              ..insert(
-                element.text + "\n",
-                attributes.isNotEmpty ? attributes : null,
-              );
-          } else {
-            // Deltas treat an enpty attribute map differently to a null one
-
-            delta
-              ..insert(
-                element.text,
-                attributes.isNotEmpty ? attributes : null,
-              );
-          } */
         }
-        // TODO ADD ELSE TO CHECK IF IS PARGRAPH
       } else {
         // The element has child elements(subclass of node) and potentially
         // text(subclass of node)
-        element.nodes.asMap().forEach((index, node) {
-          dom.Node nextNode;
-
-          /// If the current node isn't the final node then initialise [next] as the
-          /// next node
-          if (index + 1 < element.nodes.length) {
-            nextNode = element.nodes[index + 1];
-          }
-          _parseNode(
-            node,
-            delta,
-            nextNode,
-            parentAttributes: attributes,
-          );
-        });
+        element.nodes.forEach(
+          (node) {
+            delta = _parseNode(
+              node,
+              delta,
+              parentAttributes: attributes,
+            );
+          },
+        );
       }
       return delta;
     }

@@ -165,8 +165,9 @@ void main() {
   });
 
   group('Blocks', () {
+    // TODO test multi line blocks?
     group(
-      'Quote',
+      'Single line quote',
       () {
         final html = '<blockquote>Hello World!</blockquote>';
 
@@ -178,13 +179,45 @@ void main() {
       },
     );
 
+    group('Multi line quote', () {
+      final html = '<blockquote>'
+          '<p>Line 1</p>'
+          '<p>Line 2</p>'
+          '</blockquote>';
+
+      final delta = Delta()
+        ..insert('Line 1')
+        ..insert('\n', {'block': 'quote'})
+        ..insert('Line 2')
+        ..insert('\n', {'block': 'quote'});
+
+      testConverter(html, delta);
+    });
+
     group(
-      'Code',
+      'Single-line code',
       () {
         final html = '<code>Hello World!</code>';
 
         final delta = Delta()
           ..insert('Hello World!')
+          ..insert('\n', {'block': 'code'});
+
+        testConverter(html, delta);
+      },
+    );
+    group(
+      'Multi-line code',
+      () {
+        final html = '<code>'
+            '<p>Line 1</p>'
+            '<p>Line 2</p>'
+            '</code>';
+
+        final delta = Delta()
+          ..insert('Line 1')
+          ..insert('\n', {'block': 'code'})
+          ..insert('Line 2')
           ..insert('\n', {'block': 'code'});
 
         testConverter(html, delta);
@@ -260,16 +293,11 @@ void main() {
 
   group('Links', () {
     group('Plain', () {
-      final html = '<a href=\'http://fake.link\'>Hello World!</a>';
-      final NotusDocument doc = NotusDocument.fromJson([
-        {
-          'insert': 'Hello World!',
-          'attributes': {'a': 'http://fake.link'},
-        },
-        {'insert': '\n'}
-      ]);
+      final html = '<p><a href="http://fake.link">Hello World!</a></p>';
 
-      testConverter(html, doc.toDelta());
+      final delta = Delta()..insert('Hello World!', {'a': 'http://fake.link'});
+
+      testConverter(html, delta);
     });
 
     group('Italic', () {
@@ -368,6 +396,7 @@ void main() {
     final html = '<p>Plain text</p>'
         '<p><strong>Bold text</strong></p>'
         '<p><em>Italic text</em></p>'
+        '<p><strong>Bold</strong> then <em>italic</em></p>'
         '<h1>Heading 1</h1>'
         '<p><br></p>'
         '<ul>'
@@ -383,6 +412,9 @@ void main() {
       ..insert('Plain text\n')
       ..insert('Bold text\n', {'b': true})
       ..insert('Italic text\n', {'i': true})
+      ..insert('Bold', {'b': true})
+      ..insert(' then ')
+      ..insert('italic\n', {'i': true})
       ..insert('Heading 1')
       ..insert('\n', {'heading': 1})
       ..insert('\nUnordered')
