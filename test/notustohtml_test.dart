@@ -295,100 +295,65 @@ void main() {
     group('Plain', () {
       final html = '<p><a href="http://fake.link">Hello World!</a></p>';
 
-      final delta = Delta()..insert('Hello World!', {'a': 'http://fake.link'});
+      final delta = Delta()
+        ..insert('Hello World!\n', {'a': 'http://fake.link'});
 
       testConverter(html, delta);
     });
 
     group('Italic', () {
       final html = '<a href=\'http://fake.link\'><em>Hello World!</em></a>';
-      final NotusDocument doc = NotusDocument.fromJson([
-        {
-          'insert': 'Hello World!',
-          'attributes': {'a': 'http://fake.link', 'i': true},
-        },
-        {'insert': '\n'}
-      ]);
 
-      testConverter(html, doc.toDelta());
+      final delta = Delta()
+        ..insert('Hello World!', {'a': 'http://fake.link', 'i': true})
+        ..insert('\n');
+
+      testConverter(html, delta);
     });
 
     group('In list', () {
       final html =
           '<ul><li><a href="http://fake.link">Hello World!</a></li></ul>';
-      final NotusDocument doc = NotusDocument.fromJson([
-        {
-          'insert': 'Hello World!',
-          'attributes': {'a': 'http://fake.link'},
-        },
-        {
-          'insert': '\n',
-          'attributes': {'block': 'ul'},
-        }
-      ]);
 
-      testConverter(html, doc.toDelta());
+      final delta = Delta()
+        ..insert('Hello World!', {'a': 'http://fake.link'})
+        ..insert('\n', {'block': 'ul'});
+
+      testConverter(html, delta);
     });
   });
 
   group('nested inline styles', () {
     group('bold in italic', () {
       final html = '<p><em>Hello <strong>World!</strong></em></p>';
-      final NotusDocument doc = NotusDocument.fromJson([
-        {
-          'insert': 'Hello ',
-          'attributes': {'i': true},
-        },
-        {
-          'insert': 'World!\n',
-          'attributes': {'i': true, 'b': true},
-        },
-      ]);
 
-      testConverter(html, doc.toDelta());
+      final delta = Delta()
+        ..insert('Hello ', {'i': true})
+        ..insert('World!\n', {'i': true, 'b': true});
+
+      testConverter(html, delta);
     });
     group('bold in italic 2', () {
       final html = '<p><em>The <strong>quick</strong> brown</em></p>';
-      final NotusDocument doc = NotusDocument.fromJson([
-        {
-          'insert': 'The ',
-          'attributes': {'i': true},
-        },
-        {
-          'insert': 'quick',
-          'attributes': {'i': true, 'b': true},
-        },
-        {
-          'insert': ' brown\n',
-          'attributes': {'i': true},
-        },
-      ]);
 
-      testConverter(html, doc.toDelta());
+      final delta = Delta()
+        ..insert('The ', {'i': true})
+        ..insert('quick', {'i': true, 'b': true})
+        ..insert(' brown\n', {'i': true});
+
+      testConverter(html, delta);
     });
     group('bold in italic 3', () {
       final html =
           '<p><em>The <strong>quick</strong> <strong>brown</strong></em></p>';
-      final NotusDocument doc = NotusDocument.fromJson([
-        {
-          'insert': 'The ',
-          'attributes': {'i': true},
-        },
-        {
-          'insert': 'quick',
-          'attributes': {'i': true, 'b': true},
-        },
-        {
-          'insert': ' ',
-          'attributes': {'i': true},
-        },
-        {
-          'insert': 'brown\n',
-          'attributes': {'i': true, 'b': true},
-        },
-      ]);
 
-      testConverter(html, doc.toDelta());
+      final delta = Delta()
+        ..insert('The ', {'i': true})
+        ..insert('quick', {'i': true, 'b': true})
+        ..insert(' ', {'i': true})
+        ..insert('brown\n', {'i': true, 'b': true});
+
+      testConverter(html, delta);
     });
   });
 
