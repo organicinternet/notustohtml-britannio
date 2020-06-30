@@ -99,6 +99,14 @@ void main() {
 
       testConverter(html, delta);
     });
+
+    group('Line break', () {
+      final html = '<br>';
+
+      final delta = Delta()..insert('\n\n');
+
+      testDecoder(html, delta);
+    });
   });
 
   group('multi-line text', () {
@@ -128,6 +136,14 @@ void main() {
       final html = '<p><br></p><p><br></p>';
 
       final delta = Delta()..insert('\n\n\n');
+      testConverter(html, delta);
+    });
+
+    group('leading empty line', () {
+      final html = '<p><br></p>' '<p>Hello World!</p>';
+
+      final delta = Delta()..insert('\nHello World!\n');
+
       testConverter(html, delta);
     });
   });
@@ -395,4 +411,3 @@ void main() {
   });
 }
 
-// TODO add test for br tags

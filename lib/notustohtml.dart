@@ -484,6 +484,10 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     /// Converts each HTML node to a [Delta]
     htmlNodes.forEach((htmlNode) => delta = _parseNode(htmlNode, delta));
 
+    if (delta.isEmpty || !delta.last.data.endsWith('\n')) {
+      delta = _appendNewLine(delta);
+    }
+
     return delta;
   }
 
@@ -635,7 +639,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       if (element.localName == "h3") {
         blockAttributes["heading"] = 3;
       }
-      element.nodes.asMap().forEach((index, node) {
+      element.nodes.forEach((node) {
         delta = _parseNode(
           node,
           delta,
