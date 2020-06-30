@@ -7,8 +7,11 @@ environment:
   sdk: ">=2.7.0 <3.0.0"
 
 dependencies:
-  notus: 
-    path: ../zefyr/packages/notus
+  notus:
+    git:
+      url: https://github.com/britannio/zefyr
+      ref: 0990732832ed25c55a8760910d1ae0de08d03c0d
+      path: packages/notus
   quill_delta: ^1.0.2
   html: ^0.14.0
 

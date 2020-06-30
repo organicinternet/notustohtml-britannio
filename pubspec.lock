@@ -186,9 +186,11 @@ packages:
   notus:
     dependency: "direct main"
     description:
-      path: "../zefyr/packages/notus"
-      relative: true
-    source: path
+      path: "packages/notus"
+      ref: "0990732832ed25c55a8760910d1ae0de08d03c0d"
+      resolved-ref: "0990732832ed25c55a8760910d1ae0de08d03c0d"
+      url: "https://github.com/britannio/zefyr"
+    source: git
     version: "0.1.5"
   package_config:
     dependency: transitive
