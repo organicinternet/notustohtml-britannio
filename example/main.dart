@@ -24,5 +24,6 @@ void main() {
   print(html); // The HTML representation of the Notus document
 
   Delta delta = converter.decode(html); // Zefyr compatible Delta
-  NotusDocument document = NotusDocument.fromDelta(delta); // Notus document ready to be loaded into Zefyr
+  // Notus document ready to be loaded into Zefyr
+  NotusDocument document = NotusDocument.fromDelta(delta);
 }
