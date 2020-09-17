@@ -140,8 +140,8 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
       final LeafNode nextNode = node.next;
 
       // TODO check if I should only check for previous textNodes?
-      final previousNodeHasStyle = (previousNode?.style?.isNotEmpty ?? false);
-      final nextNodeHasStyle = (nextNode?.style?.isNotEmpty ?? false);
+      final previousNodeHasStyle = previousNode?.style?.isNotEmpty ?? false;
+      final nextNodeHasStyle = nextNode?.style?.isNotEmpty ?? false;
 
       // Open styles
       final Set<String> tagsToOpen = {};
@@ -267,28 +267,28 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         Map.from(parentBlockAttributes ?? {});
     if (htmlNode is dom.Element) {
       // The html node is an element
-      dom.Element element = htmlNode;
+      final dom.Element element = htmlNode;
       final String elementName = htmlNode.localName;
-      if (elementName == "ul") {
+      if (elementName == 'ul') {
         // Unordered list
         element.children.forEach((child) {
           delta = _parseElement(
             child,
             delta,
-            listType: "ul",
+            listType: 'ul',
             inList: inList,
             parentAttributes: attributes,
             parentBlockAttributes: blockAttributes,
           );
         });
         return delta;
-      } else if (elementName == "ol") {
+      } else if (elementName == 'ol') {
         // Ordered list
         element.children.forEach((child) {
           delta = _parseElement(
             child,
             delta,
-            listType: "ol",
+            listType: 'ol',
             inList: inList,
             parentAttributes: attributes,
             parentBlockAttributes: blockAttributes,
@@ -338,7 +338,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       }
     } else if (htmlNode is dom.Text) {
       // The html node is text
-      dom.Text text = htmlNode;
+      final dom.Text text = htmlNode;
 
       delta.insert(
         text.text,
@@ -366,79 +366,78 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       final Map<String, dynamic> blockAttributes =
           Map.from(parentBlockAttributes ?? {});
 
-      if (element.localName == "blockquote") {
-        blockAttributes["block"] = "quote";
+      if (element.localName == 'blockquote') {
+        blockAttributes['block'] = 'quote';
       }
-      if (element.localName == "code") {
-        blockAttributes["block"] = "code";
+      if (element.localName == 'code') {
+        blockAttributes['block'] = 'code';
       }
-      if (element.localName == "li") {
-        blockAttributes["block"] = listType;
+      if (element.localName == 'li') {
+        blockAttributes['block'] = listType;
       }
-      if (element.localName == "h1") {
-        blockAttributes["heading"] = 1;
+      if (element.localName == 'h1') {
+        blockAttributes['heading'] = 1;
       }
-      if (element.localName == "h2") {
-        blockAttributes["heading"] = 2;
+      if (element.localName == 'h2') {
+        blockAttributes['heading'] = 2;
       }
-      if (element.localName == "h3") {
-        blockAttributes["heading"] = 3;
+      if (element.localName == 'h3') {
+        blockAttributes['heading'] = 3;
       }
       element.nodes.forEach((node) {
         delta = _parseNode(
           node,
           delta,
-          inList: element.localName == "li",
+          inList: element.localName == 'li',
           parentAttributes: attributes,
           parentBlockAttributes: blockAttributes,
         );
       });
       if (parentBlockAttributes.isEmpty) {
-        delta..insert('\n', blockAttributes);
+        delta.insert('\n', blockAttributes);
       }
       return delta;
     } else if (type == _HtmlType.EMBED) {
       NotusDocument tempdocument;
-      if (element.localName == "img") {
-        delta..insert("\n");
+      if (element.localName == 'img') {
+        delta.insert('\n');
         tempdocument = NotusDocument.fromDelta(delta);
         final int index = tempdocument.length;
         tempdocument.format(index - 1, 0,
-            NotusAttribute.embed.image(element.attributes["src"]));
+            NotusAttribute.embed.image(element.attributes['src']));
       }
-      if (element.localName == "hr") {
-        delta..insert("\n");
+      if (element.localName == 'hr') {
+        delta.insert('\n');
         tempdocument = NotusDocument.fromDelta(delta);
         final int index = tempdocument.length;
         tempdocument.format(index - 1, 0, NotusAttribute.embed.horizontalRule);
       }
       return tempdocument.toDelta();
     } else {
-      if (element.localName == "em" || element.localName == "i") {
-        attributes["i"] = true;
+      if (element.localName == 'em' || element.localName == 'i') {
+        attributes['i'] = true;
       }
-      if (element.localName == "strong" || element.localName == "b") {
-        attributes["b"] = true;
+      if (element.localName == 'strong' || element.localName == 'b') {
+        attributes['b'] = true;
       }
 
-      if (element.localName == "a") {
-        attributes["a"] = element.attributes["href"];
+      if (element.localName == 'a') {
+        attributes['a'] = element.attributes['href'];
       }
 
       if (element.children.isEmpty) {
         // The element has no child elements i.e. this is the leaf element
-        if (attributes["a"] != null) {
+        if (attributes['a'] != null) {
           // It's a link
-          delta..insert(element.text, attributes);
+          delta.insert(element.text, attributes);
           if (inList == null || (inList != null && !inList)) {
-            delta..insert("\n");
+            delta.insert('\n');
           }
         } else {
-          delta
-            ..insert(
-              element.text,
-              attributes.isNotEmpty ? attributes : null,
-            );
+          delta.insert(
+            element.text,
+            attributes.isNotEmpty ? attributes : null,
+          );
         }
       } else {
         // The element has child elements(subclass of node) and potentially
@@ -457,24 +456,24 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     }
   }
 
-  Map<String, _HtmlType> _supportedHTMLElements = {
-    "img": _HtmlType.EMBED,
-    "hr": _HtmlType.EMBED,
-    "li": _HtmlType.BLOCK,
-    "blockquote": _HtmlType.BLOCK,
-    "code": _HtmlType.BLOCK,
-    "div": _HtmlType.BLOCK,
-    "h1": _HtmlType.BLOCK,
-    "h2": _HtmlType.BLOCK,
-    "h3": _HtmlType.BLOCK,
+  final Map<String, _HtmlType> _supportedHTMLElements = {
+    'img': _HtmlType.EMBED,
+    'hr': _HtmlType.EMBED,
+    'li': _HtmlType.BLOCK,
+    'blockquote': _HtmlType.BLOCK,
+    'code': _HtmlType.BLOCK,
+    'div': _HtmlType.BLOCK,
+    'h1': _HtmlType.BLOCK,
+    'h2': _HtmlType.BLOCK,
+    'h3': _HtmlType.BLOCK,
     // Italic
-    "em": _HtmlType.INLINE,
-    "i": _HtmlType.INLINE,
+    'em': _HtmlType.INLINE,
+    'i': _HtmlType.INLINE,
     // Bold
-    "strong": _HtmlType.INLINE,
-    "b": _HtmlType.INLINE,
-    "a": _HtmlType.INLINE,
-    "p": _HtmlType.INLINE,
+    'strong': _HtmlType.INLINE,
+    'b': _HtmlType.INLINE,
+    'a': _HtmlType.INLINE,
+    'p': _HtmlType.INLINE,
   };
 }
 
