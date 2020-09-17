@@ -184,7 +184,7 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
     htmlBuffer.write(close ? '</$tag>' : '<$tag>');
   }
 
-  /// Takes a set of tags that and opens them if they're unopened otherwise
+  /// Takes a set of tags and opens them if they're unopened otherwise
   /// it closes them in the reverse order they were opened in.
   /// This should only be used for tags with the same heirarchy e.g.
   /// bold/italic/link and not headings, paragraphs, line breaks etc

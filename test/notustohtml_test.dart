@@ -299,7 +299,7 @@ void main() {
         final html = '<img src="http://fake.link/image.png">';
         final delta = Delta()..insert('\n');
         final document = NotusDocument.fromDelta(delta);
-        var index = document.length;
+        final index = document.length;
         document.format(index - 1, 0,
             NotusAttribute.embed.image('http://fake.link/image.png'));
 
@@ -309,7 +309,7 @@ void main() {
         final html = '<hr>';
         final delta = Delta()..insert('\n');
         final document = NotusDocument.fromDelta(delta);
-        var index = document.length;
+        final index = document.length;
         document.format(index - 1, 0, NotusAttribute.embed.horizontalRule);
 
         testConverter(html, document.toDelta());
