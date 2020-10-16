@@ -229,7 +229,9 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     /// Converts each HTML node to a [Delta]
     htmlNodes.forEach((htmlNode) => delta = _parseNode(htmlNode, delta));
 
-    if (delta.isEmpty || !delta.last.data.endsWith('\n')) {
+    if (delta.isEmpty ||
+        !(delta.last.data is String &&
+            (delta.last.data as String).endsWith('\n'))) {
       delta = _appendNewLine(delta);
     }
 
@@ -315,7 +317,9 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
               parentBlockAttributes: blockAttributes,
             );
           }
-          if (delta.isEmpty || !delta.last.data.endsWith('\n')) {
+          if (delta.isEmpty ||
+              !(delta.last.data is String &&
+                  (delta.last.data as String).endsWith('\n'))) {
             delta = _appendNewLine(delta);
           }
           return delta;
@@ -400,17 +404,17 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     } else if (type == _HtmlType.EMBED) {
       NotusDocument tempdocument;
       if (element.localName == 'img') {
-        delta.insert('\n');
+        /* delta.insert('\n');
         tempdocument = NotusDocument.fromDelta(delta);
         final int index = tempdocument.length;
         tempdocument.format(index - 1, 0,
-            NotusAttribute.embed.image(element.attributes['src']));
+            NotusAttribute.embed.image(element.attributes['src'])); */
       }
       if (element.localName == 'hr') {
-        delta.insert('\n');
+        /*  delta.insert('\n');
         tempdocument = NotusDocument.fromDelta(delta);
         final int index = tempdocument.length;
-        tempdocument.format(index - 1, 0, NotusAttribute.embed.horizontalRule);
+        tempdocument.format(index - 1, 0, NotusAttribute.embed.horizontalRule); */
       }
       return tempdocument.toDelta();
     } else {
