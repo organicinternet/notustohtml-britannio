@@ -186,12 +186,10 @@ packages:
   notus:
     dependency: "direct main"
     description:
-      path: "packages/notus"
-      ref: "0990732832ed25c55a8760910d1ae0de08d03c0d"
-      resolved-ref: "0990732832ed25c55a8760910d1ae0de08d03c0d"
-      url: "https://github.com/britannio/zefyr"
-    source: git
-    version: "0.1.5"
+      name: notus
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.0-dev.3.0"
   package_config:
     dependency: transitive
     description:
@@ -233,7 +231,7 @@ packages:
       name: quill_delta
       url: "https://pub.dartlang.org"
     source: hosted
-    version: "1.0.2"
+    version: "2.0.0"
   quiver_hashcode:
     dependency: transitive
     description:
@@ -382,4 +380,4 @@ packages:
     source: hosted
     version: "2.2.1"
 sdks:
-  dart: ">=2.7.0 <3.0.0"
+  dart: ">=2.9.0 <3.0.0"
