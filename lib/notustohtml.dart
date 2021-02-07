@@ -23,6 +23,8 @@ class NotusHtmlCodec extends Codec<Delta, String> {
 class _NotusHtmlEncoder extends Converter<Delta, String> {
   static const kBold = 'strong';
   static const kItalic = 'em';
+  static const kUnderline = 'u';
+  static const kStrikethrough = 's';
   static const kParagraph = 'p';
   static const kLineBreak = 'br';
   static const kHeading1 = 'h1';
@@ -65,10 +67,13 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
     final level = style.value<int>(NotusAttribute.heading);
     switch (level) {
       case 1:
+      case 11:
         return kHeading1;
       case 2:
+      case 12:
         return kHeading2;
       case 3:
+      case 13:
         return kHeading3;
       default:
         throw UnsupportedError(
@@ -78,7 +83,21 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
     }
   }
 
-  void _parseLineNode(LineNode node) {
+  String _getHeadingClass(NotusStyle style) {
+    final level = style.value<int>(NotusAttribute.heading);
+    switch (level) {
+      case 11:
+        return 'lightheader-one';
+      case 12:
+        return 'lightheader-two';
+      case 13:
+        return 'lightheader-three';
+      default:
+        return null;
+    }
+  }
+
+  void _parseLineNode(LineNode node, {inBlockQuote = false}) {
     final bool isHeading = node.style.contains(NotusAttribute.heading);
     final bool isList = node.style.containsSame(NotusAttribute.ul) ||
         node.style.containsSame(NotusAttribute.ol);
@@ -87,12 +106,17 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
 
     // Opening heading/paragraph tag
     String tag;
+    String cssClass;
     if (isHeading) {
       tag = _getHeadingTag(node.style);
+      cssClass = _getHeadingClass(node.style);
     } else if (isList) {
       tag = kListItem;
     } else {
       tag = kParagraph;
+      if (node.style != null && node.style.contains(NotusAttribute.p)) {
+        cssClass = node.style.value<String>(NotusAttribute.p);
+      }
       // throw UnsupportedError('Unsupported LineNode style: ${node.style}');
     }
 
@@ -100,8 +124,10 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
       _writeTag(kParagraph);
       _writeTag(kLineBreak);
       _writeTag(kParagraph, close: true);
+    } else if (inBlockQuote) {
+      node.children.cast<LeafNode>().forEach(_parseLeafNode);
     } else if (node.isNotEmpty) {
-      _writeTag(tag);
+      _writeTag(tag, cssClass: cssClass);
       node.children.cast<LeafNode>().forEach(_parseLeafNode);
       _writeTag(tag, close: true);
     }
@@ -121,7 +147,8 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
       throw UnsupportedError('Unsupported BlockNode: $node');
     }
     _writeTag(tag);
-    node.children.cast<LineNode>().forEach(_parseLineNode);
+    node.children.cast<LineNode>().forEach(
+        (childNode) => _parseLineNode(childNode, inBlockQuote: tag == kQuote));
     _writeTag(tag, close: true);
   }
 
@@ -130,6 +157,16 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
         node.style?.containsSame(NotusAttribute.bold) ?? false;
     bool isItalic(LeafNode node) =>
         node.style?.containsSame(NotusAttribute.italic) ?? false;
+    bool isUnderline(LeafNode node) =>
+        node.style?.containsSame(NotusAttribute.underline) ?? false;
+    bool isStrikethrough(LeafNode node) =>
+        node.style?.containsSame(NotusAttribute.strikethrough) ?? false;
+    bool isColor(LeafNode node) =>
+        node.style?.contains(NotusAttribute.color) ?? false;
+    bool isBackgroundColor(LeafNode node) =>
+        node.style?.contains(NotusAttribute.backgroundColor) ?? false;
+    bool isSpan(LeafNode node) =>
+        node.style?.contains(NotusAttribute.span) ?? false;
 
     if (node is TextNode) {
       // Open style tag if `node.prev` doesn't contain it but `node` does
@@ -154,6 +191,39 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
           (!previousNodeHasStyle || !isItalic(previousNode))) {
         tagsToOpen.add(kItalic);
       }
+      if (isUnderline(node) &&
+          // First LeafNode in the LineNode that is underlined
+          (!previousNodeHasStyle || !isUnderline(previousNode))) {
+        tagsToOpen.add(kUnderline);
+      }
+      if (isStrikethrough(node) &&
+          // First LeafNode in the LineNode that is strikethrough
+          (!previousNodeHasStyle || !isStrikethrough(previousNode))) {
+        tagsToOpen.add(kStrikethrough);
+      }
+      // TODO use tagsToOpen ideally (with attributes)
+      if (isColor(node) &&
+          // First LeafNode in the LineNode that is colored
+          (!previousNodeHasStyle || !isColor(previousNode))) {
+        htmlBuffer.write(
+            '<span style="color: #${node.style.value<String>(NotusAttribute.color)}">');
+      }
+      // TODO use tagsToOpen ideally (with attributes)
+      if (isBackgroundColor(node) &&
+          // First LeafNode in the LineNode that is colored
+          (!previousNodeHasStyle || !isColor(previousNode))) {
+        htmlBuffer.write(
+            '<span style="background-color: #${node.style.value<String>(NotusAttribute.backgroundColor)}">');
+      }
+      // TODO use tagsToOpen ideally (with attributes)
+      if (isSpan(
+              node) /* &&
+          // First LeafNode in the LineNode that has ql font
+          (!previousNodeHasStyle || !isSpan(previousNode))*/
+          ) {
+        htmlBuffer.write(
+            '<span class="${node.style.value<String>(NotusAttribute.span)}">');
+      }
 
       if (tagsToOpen.isNotEmpty) _writeTagsOrdered(tagsToOpen);
 
@@ -162,6 +232,36 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
 
       // Close styles
       final Set<String> tagsToClose = {};
+
+      if (isSpan(
+              node) /* &&
+          // First LeafNode in the LineNode that has ql font
+          (!nextNodeHasStyle || !isSpan(nextNode))*/
+          ) {
+        htmlBuffer.write('</span>');
+      }
+
+      if (isBackgroundColor(node) &&
+          // First LeafNode in the LineNode that is colored
+          (!nextNodeHasStyle || !isBackgroundColor(nextNode))) {
+        htmlBuffer.write('</span>');
+      }
+
+      if (isColor(node) &&
+          // First LeafNode in the LineNode that is colored
+          (!nextNodeHasStyle || !isColor(nextNode))) {
+        htmlBuffer.write('</span>');
+      }
+
+      if (isStrikethrough(node) &&
+          (!nextNodeHasStyle || !isStrikethrough(nextNode))) {
+        // Last LeafNode in the LineNode that is strikethrough
+        tagsToClose.add(kStrikethrough);
+      }
+      if (isUnderline(node) && (!nextNodeHasStyle || !isUnderline(nextNode))) {
+        // Last LeafNode in the LineNode that is underlined
+        tagsToClose.add(kUnderline);
+      }
       if (isItalic(node) && (!nextNodeHasStyle || !isItalic(nextNode))) {
         // Last LeafNode in the LineNode that is italic
         tagsToClose.add(kItalic);
@@ -173,15 +273,23 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
       if (tagsToClose.isNotEmpty) _writeTagsOrdered(tagsToClose);
     } else if (node is EmbedNode) {
       // TODO add EmbedNode support
+      var value = node.style.value(NotusAttribute.embed);
+      if (value['type'] == 'image') {
+        htmlBuffer.write('<img src="${value['source']}">');
+      }
     } else {
       throw 'Unsupported LeafNode';
     }
   }
 
-  void _writeTag(String tag, {bool close = false}) {
+  void _writeTag(String tag, {String cssClass, bool close = false}) {
     // and storing the current order of open tags so they can be
     // closed in the correct order
-    htmlBuffer.write(close ? '</$tag>' : '<$tag>');
+    if (cssClass != null) {
+      htmlBuffer.write(close ? '</$tag>' : '<$tag class="$cssClass">');
+    } else {
+      htmlBuffer.write(close ? '</$tag>' : '<$tag>');
+    }
   }
 
   /// Takes a set of tags and opens them if they're unopened otherwise
@@ -301,6 +409,9 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         // Paragraph
         final nodes = element.nodes;
 
+        // get the custom class if available
+        attributes['p'] = htmlNode.className;
+
         // TODO find a simpler way to express this
         if (nodes.length == 1 &&
             nodes.first is dom.Element &&
@@ -380,13 +491,25 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         blockAttributes['block'] = listType;
       }
       if (element.localName == 'h1') {
-        blockAttributes['heading'] = 1;
+        if (element.className == 'lightheader-one') {
+          blockAttributes['heading'] = 11;
+        } else {
+          blockAttributes['heading'] = 1;
+        }
       }
       if (element.localName == 'h2') {
-        blockAttributes['heading'] = 2;
+        if (element.className == 'lightheader-two') {
+          blockAttributes['heading'] = 12;
+        } else {
+          blockAttributes['heading'] = 2;
+        }
       }
       if (element.localName == 'h3') {
-        blockAttributes['heading'] = 3;
+        if (element.className == 'lightheader-three') {
+          blockAttributes['heading'] = 13;
+        } else {
+          blockAttributes['heading'] = 3;
+        }
       }
       element.nodes.forEach((node) {
         delta = _parseNode(
@@ -404,17 +527,17 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     } else if (type == _HtmlType.EMBED) {
       NotusDocument tempdocument;
       if (element.localName == 'img') {
-        /* delta.insert('\n');
+        delta.insert('\n');
         tempdocument = NotusDocument.fromDelta(delta);
         final int index = tempdocument.length;
         tempdocument.format(index - 1, 0,
-            NotusAttribute.embed.image(element.attributes['src'])); */
+            NotusAttribute.embed.image(element.attributes['src']));
       }
       if (element.localName == 'hr') {
-        /*  delta.insert('\n');
+        delta.insert('\n');
         tempdocument = NotusDocument.fromDelta(delta);
         final int index = tempdocument.length;
-        tempdocument.format(index - 1, 0, NotusAttribute.embed.horizontalRule); */
+        tempdocument.format(index - 1, 0, NotusAttribute.embed.horizontalRule);
       }
       return tempdocument.toDelta();
     } else {
@@ -423,6 +546,34 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       }
       if (element.localName == 'strong' || element.localName == 'b') {
         attributes['b'] = true;
+      }
+      if (element.localName == 'u') {
+        attributes['u'] = true;
+      }
+      if (element.localName == 's') {
+        attributes['s'] = true;
+      }
+
+      if (element.localName == 'span') {
+        // could be color, backgroundColor or ql-font
+        if (element.attributes['style'] != null) {
+          if (element.attributes['style'].startsWith('background-color')) {
+            attributes[NotusAttribute.backgroundColor.key] =
+                NotusAttribute.color.neonYellow.value;
+          } else {
+            attributes[NotusAttribute.color.key] =
+                NotusAttribute.color.cherryRed.value;
+          }
+        }
+        if (element.className != null && element.className.length > 0) {
+          if (element.className.contains('ql-font-10')) {
+            attributes[NotusAttribute.span.key] =
+                NotusAttribute.span.fontQl10.value;
+          } else if (element.className.contains('ql-font-1')) {
+            attributes[NotusAttribute.span.key] =
+                NotusAttribute.span.fontQl1.value;
+          }
+        }
       }
 
       if (element.localName == 'a') {
@@ -476,8 +627,12 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     // Bold
     'strong': _HtmlType.INLINE,
     'b': _HtmlType.INLINE,
+
+    'u': _HtmlType.INLINE,
+    's': _HtmlType.INLINE,
     'a': _HtmlType.INLINE,
     'p': _HtmlType.INLINE,
+    'span': _HtmlType.INLINE,
   };
 }
 

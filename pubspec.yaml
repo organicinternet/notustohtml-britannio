@@ -7,9 +7,15 @@ environment:
   sdk: ">=2.7.0 <3.0.0"
 
 dependencies:
-  notus: ^1.0.0-dev.3.0
-  quill_delta: ^2.0.0
+  notus:
+    git:
+      url: git://github.com/organicinternet/zefyr.git
+      path: packages/notus/
+      ref: master
+  quill_delta: ^1.0.0
   html: ^0.14.0
 
 dev_dependencies:
   test:
+
+publish_to: none
