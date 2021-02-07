@@ -572,6 +572,30 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
           } else if (element.className.contains('ql-font-1')) {
             attributes[NotusAttribute.span.key] =
                 NotusAttribute.span.fontQl1.value;
+          } else if (element.className.contains('ql-font-2')) {
+            attributes[NotusAttribute.span.key] =
+                NotusAttribute.span.fontQl2.value;
+          } else if (element.className.contains('ql-font-3')) {
+            attributes[NotusAttribute.span.key] =
+                NotusAttribute.span.fontQl3.value;
+          } else if (element.className.contains('ql-font-4')) {
+            attributes[NotusAttribute.span.key] =
+                NotusAttribute.span.fontQl4.value;
+          } else if (element.className.contains('ql-font-5')) {
+            attributes[NotusAttribute.span.key] =
+                NotusAttribute.span.fontQl5.value;
+          } else if (element.className.contains('ql-font-6')) {
+            attributes[NotusAttribute.span.key] =
+                NotusAttribute.span.fontQl6.value;
+          } else if (element.className.contains('ql-font-7')) {
+            attributes[NotusAttribute.span.key] =
+                NotusAttribute.span.fontQl7.value;
+          } else if (element.className.contains('ql-font-8')) {
+            attributes[NotusAttribute.span.key] =
+                NotusAttribute.span.fontQl8.value;
+          } else if (element.className.contains('ql-font-9')) {
+            attributes[NotusAttribute.span.key] =
+                NotusAttribute.span.fontQl9.value;
           }
         }
       }
