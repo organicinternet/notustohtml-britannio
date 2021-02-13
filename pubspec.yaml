@@ -8,6 +8,7 @@ environment:
 
 dependencies:
   notus:
+    # path: '../zefyr/packages/notus'
     git:
       url: git://github.com/organicinternet/zefyr.git
       path: packages/notus/

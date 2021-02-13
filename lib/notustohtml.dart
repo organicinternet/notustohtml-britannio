@@ -117,6 +117,29 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
       if (node.style != null && node.style.contains(NotusAttribute.p)) {
         cssClass = node.style.value<String>(NotusAttribute.p);
       }
+      if (node.style != null && node.style.contains(NotusAttribute.alignment)) {
+        if (cssClass != null) {
+          cssClass += ' ';
+        } else {
+          cssClass = '';
+        }
+        if (node.style.value<String>(NotusAttribute.alignment) ==
+            NotusAttribute.leftAlignment.value) {
+          cssClass += 'ql-align-left';
+        }
+        if (node.style.value<String>(NotusAttribute.alignment) ==
+            NotusAttribute.centerAlignment.value) {
+          cssClass += 'ql-align-center';
+        }
+        if (node.style.value<String>(NotusAttribute.alignment) ==
+            NotusAttribute.rightAlignment.value) {
+          cssClass += 'ql-align-right';
+        }
+        if (node.style.value<String>(NotusAttribute.alignment) ==
+            NotusAttribute.justifyAlignment.value) {
+          cssClass += 'ql-align-justify';
+        }
+      }
       // throw UnsupportedError('Unsupported LineNode style: ${node.style}');
     }
 
@@ -167,6 +190,8 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
         node.style?.contains(NotusAttribute.backgroundColor) ?? false;
     bool isSpan(LeafNode node) =>
         node.style?.contains(NotusAttribute.span) ?? false;
+    bool isLink(LeafNode node) =>
+        node.style?.contains(NotusAttribute.link) ?? false;
 
     if (node is TextNode) {
       // Open style tag if `node.prev` doesn't contain it but `node` does
@@ -224,6 +249,10 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
         htmlBuffer.write(
             '<span class="${node.style.value<String>(NotusAttribute.span)}">');
       }
+      if (isLink(node)) {
+        htmlBuffer.write(
+            '<a href="${node.style.value<String>(NotusAttribute.link)}">');
+      }
 
       if (tagsToOpen.isNotEmpty) _writeTagsOrdered(tagsToOpen);
 
@@ -233,6 +262,13 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
       // Close styles
       final Set<String> tagsToClose = {};
 
+      if (isLink(
+              node) /* &&
+          // First LeafNode in the LineNode that has ql font
+          (!nextNodeHasStyle || !isSpan(nextNode))*/
+          ) {
+        htmlBuffer.write('</a>');
+      }
       if (isSpan(
               node) /* &&
           // First LeafNode in the LineNode that has ql font
@@ -412,6 +448,16 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         // get the custom class if available
         attributes['p'] = htmlNode.className;
 
+        if (element.className.contains('ql-align-left')) {
+          blockAttributes['alignment'] = 'left';
+        } else if (element.className.contains('ql-align-center')) {
+          blockAttributes['alignment'] = 'center';
+        } else if (element.className.contains('ql-align-right')) {
+          blockAttributes['alignment'] = 'right';
+        } else if (element.className.contains('ql-align-justify')) {
+          blockAttributes['alignment'] = 'justify';
+        }
+
         // TODO find a simpler way to express this
         if (nodes.length == 1 &&
             nodes.first is dom.Element &&
@@ -428,10 +474,15 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
               parentBlockAttributes: blockAttributes,
             );
           }
-          if (delta.isEmpty ||
-              !(delta.last.data is String &&
-                  (delta.last.data as String).endsWith('\n'))) {
-            delta = _appendNewLine(delta);
+
+          if (blockAttributes['alignment'] != null) {
+            delta..insert('\n', blockAttributes);
+          } else {
+            if (delta.isEmpty ||
+                !(delta.last.data is String &&
+                    (delta.last.data as String).endsWith('\n'))) {
+              delta = _appendNewLine(delta);
+            }
           }
           return delta;
         }
@@ -872,38 +923,39 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
             attributes[NotusAttribute.color.key] = NotusAttribute.bruise.value;
           }
         }
-        if (element.className != null && element.className.length > 0) {
-          if (element.className.contains('ql-font-10')) {
-            attributes[NotusAttribute.span.key] =
-                NotusAttribute.span.fontQl10.value;
-          } else if (element.className.contains('ql-font-1')) {
-            attributes[NotusAttribute.span.key] =
-                NotusAttribute.span.fontQl1.value;
-          } else if (element.className.contains('ql-font-2')) {
-            attributes[NotusAttribute.span.key] =
-                NotusAttribute.span.fontQl2.value;
-          } else if (element.className.contains('ql-font-3')) {
-            attributes[NotusAttribute.span.key] =
-                NotusAttribute.span.fontQl3.value;
-          } else if (element.className.contains('ql-font-4')) {
-            attributes[NotusAttribute.span.key] =
-                NotusAttribute.span.fontQl4.value;
-          } else if (element.className.contains('ql-font-5')) {
-            attributes[NotusAttribute.span.key] =
-                NotusAttribute.span.fontQl5.value;
-          } else if (element.className.contains('ql-font-6')) {
-            attributes[NotusAttribute.span.key] =
-                NotusAttribute.span.fontQl6.value;
-          } else if (element.className.contains('ql-font-7')) {
-            attributes[NotusAttribute.span.key] =
-                NotusAttribute.span.fontQl7.value;
-          } else if (element.className.contains('ql-font-8')) {
-            attributes[NotusAttribute.span.key] =
-                NotusAttribute.span.fontQl8.value;
-          } else if (element.className.contains('ql-font-9')) {
-            attributes[NotusAttribute.span.key] =
-                NotusAttribute.span.fontQl9.value;
-          }
+      }
+      if (element.className != null &&
+          element.className.startsWith('ql-font-')) {
+        if (element.className.contains('ql-font-10')) {
+          attributes[NotusAttribute.span.key] =
+              NotusAttribute.span.fontQl10.value;
+        } else if (element.className.contains('ql-font-1')) {
+          attributes[NotusAttribute.span.key] =
+              NotusAttribute.span.fontQl1.value;
+        } else if (element.className.contains('ql-font-2')) {
+          attributes[NotusAttribute.span.key] =
+              NotusAttribute.span.fontQl2.value;
+        } else if (element.className.contains('ql-font-3')) {
+          attributes[NotusAttribute.span.key] =
+              NotusAttribute.span.fontQl3.value;
+        } else if (element.className.contains('ql-font-4')) {
+          attributes[NotusAttribute.span.key] =
+              NotusAttribute.span.fontQl4.value;
+        } else if (element.className.contains('ql-font-5')) {
+          attributes[NotusAttribute.span.key] =
+              NotusAttribute.span.fontQl5.value;
+        } else if (element.className.contains('ql-font-6')) {
+          attributes[NotusAttribute.span.key] =
+              NotusAttribute.span.fontQl6.value;
+        } else if (element.className.contains('ql-font-7')) {
+          attributes[NotusAttribute.span.key] =
+              NotusAttribute.span.fontQl7.value;
+        } else if (element.className.contains('ql-font-8')) {
+          attributes[NotusAttribute.span.key] =
+              NotusAttribute.span.fontQl8.value;
+        } else if (element.className.contains('ql-font-9')) {
+          attributes[NotusAttribute.span.key] =
+              NotusAttribute.span.fontQl9.value;
         }
       }
 
@@ -916,9 +968,10 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         if (attributes['a'] != null) {
           // It's a link
           delta.insert(element.text, attributes);
-          if (inList == null || (inList != null && !inList)) {
-            delta.insert('\n');
-          }
+          // TODO don't break after links
+          // if (inList == null || (inList != null && !inList)) {
+          //   delta.insert('\n');
+          // }
         } else {
           delta.insert(
             element.text,
@@ -962,7 +1015,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     'u': _HtmlType.INLINE,
     's': _HtmlType.INLINE,
     'a': _HtmlType.INLINE,
-    'p': _HtmlType.INLINE,
+    'p': _HtmlType.BLOCK,
     'span': _HtmlType.INLINE,
   };
 }
