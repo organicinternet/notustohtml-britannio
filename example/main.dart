@@ -182,8 +182,12 @@ void main() {
   //     '<p><strong class="ql-font-8">Busyness</strong><span class="ql-font-8"> is the most dangerous enemy of joy</span></p><p><br></p><p><strong class="ql-font-7">– Herman Hesse</strong></p>';
   // String htmlNotes =
   //     '<p><span class="ql-font-8"><strong>Busyness</strong> is the most dangerous enemy of joy</span></p><p><br></p><p><span class="ql-font-7"><strong>– Herman Hesse</strong></span></p>';
+  // String htmlNotes =
+  //     '<p><span class="ql-font-7">left</span></p><p class="ql-align-center"><span class="ql-font-7">center</span></p><p class="ql-align-right"><span class="ql-font-7">right</span></p><p class="ql-align-center"><span class="ql-font-7">center</span></p><p><span class="ql-font-7">left</span></p><p class="ql-align-justify"><br></p>';
+  // String htmlNotes =
+  //     '<p><span style="color: rgb(255, 255, 0); background-color: rgb(230, 0, 0);">This text is highlighted red with a yellow font. </span></p><p><span style="color: rgb(255, 255, 0);">And if I colour this text without a highlight, it removes the highlight above.</span></p>';
   String htmlNotes =
-      '<p><span class="ql-font-7">left</span></p><p class="ql-align-center"><span class="ql-font-7">center</span></p><p class="ql-align-right"><span class="ql-font-7">right</span></p><p class="ql-align-center"><span class="ql-font-7">center</span></p><p><span class="ql-font-7">left</span></p><p class="ql-align-justify"><br></p>';
+      '<p class=""><span style="color: rgb(255, 255, 0)"><span style="background-color: rgb(230, 0, 0)">This text is highlighted red with a yellow font. </span></span></p><p class=""><span style="color: rgb(255, 255, 0)">And if I colour this text without a highlight, it removes the highlight above.</span></p>';
   Delta htmlNotesDelta = converter.decode(htmlNotes); // Zefyr compatible Delta
   NotusDocument htmlNotesDocument = NotusDocument.fromDelta(htmlNotesDelta);
   String htmlNotesJsonString = json.encode(htmlNotesDocument.toDelta());

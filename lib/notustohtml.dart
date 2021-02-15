@@ -609,317 +609,376 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         // could be color, backgroundColor or ql-font
         if (element.attributes['style'] != null) {
           if (element.attributes['style']
-              .startsWith('background-color: rgb(0 , 0, 0)')) {
+              .contains('background-color: rgb(0, 0, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcblack.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(230, 0, 0)')) {
+              .contains('background-color: rgb(230, 0, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcred.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(255, 153, 0)')) {
+              .contains('background-color: rgb(255, 153, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcorange.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(255, 255, 0)')) {
+              .contains('background-color: rgb(255, 255, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcyellow.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(0, 138, 0)')) {
+              .contains('background-color: rgb(0, 138, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcgreen.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(0, 102, 204)')) {
+              .contains('background-color: rgb(0, 102, 204)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcblue.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(153, 51, 255)')) {
+              .contains('background-color: rgb(153, 51, 255)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcpurple.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(255, 255, 255)')) {
+              .contains('background-color: rgb(255, 255, 255)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcwhite.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(250, 204, 204)')) {
+              .contains('background-color: rgb(250, 204, 204)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcpink.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(255, 235, 204)')) {
+              .contains('background-color: rgb(255, 235, 204)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcmagnolia.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(255, 255, 204)')) {
+              .contains('background-color: rgb(255, 255, 204)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bccream.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(204, 232, 204)')) {
+              .contains('background-color: rgb(204, 232, 204)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcmint.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(204, 224, 245)')) {
+              .contains('background-color: rgb(204, 224, 245)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bceggshell.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(235, 214, 255)')) {
+              .contains('background-color: rgb(235, 214, 255)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcmauve.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(187, 187, 187)')) {
+              .contains('background-color: rgb(187, 187, 187)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bclightGrey.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(240, 102, 102)')) {
+              .contains('background-color: rgb(240, 102, 102)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcrosy.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(255, 194, 102)')) {
+              .contains('background-color: rgb(255, 194, 102)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcamber.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(255, 255, 102)')) {
+              .contains('background-color: rgb(255, 255, 102)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bccanary.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(102, 185, 102)')) {
+              .contains('background-color: rgb(102, 185, 102)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcregent.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(102, 163, 224)')) {
+              .contains('background-color: rgb(102, 163, 224)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bceuston.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(194, 133, 255)')) {
+              .contains('background-color: rgb(194, 133, 255)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcpremier.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(136, 136, 136)')) {
+              .contains('background-color: rgb(136, 136, 136)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcmidGrey.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(161, 0, 0)')) {
+              .contains('background-color: rgb(161, 0, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcmaroon.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(178, 107, 0)')) {
+              .contains('background-color: rgb(178, 107, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcmustard.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(178, 178, 0)')) {
+              .contains('background-color: rgb(178, 178, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcsick.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(0, 97, 0)')) {
+              .contains('background-color: rgb(0, 97, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcsnooker.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(0, 71, 178)')) {
+              .contains('background-color: rgb(0, 71, 178)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bceverton.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(107, 36, 178)')) {
+              .contains('background-color: rgb(107, 36, 178)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bclenny.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(68, 68, 68)')) {
+              .contains('background-color: rgb(68, 68, 68)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bccharcoal.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(92, 0, 0)')) {
+              .contains('background-color: rgb(92, 0, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcbudget.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(102, 61, 0)')) {
+              .contains('background-color: rgb(102, 61, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcbrown.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(102, 102, 0)')) {
+              .contains('background-color: rgb(102, 102, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcbean.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(0, 55, 0)')) {
+              .contains('background-color: rgb(0, 55, 0)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcaftereight.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(0, 41, 102)')) {
+              .contains('background-color: rgb(0, 41, 102)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcocean.value;
           }
           if (element.attributes['style']
-              .startsWith('background-color: rgb(61, 20, 102)')) {
+              .contains('background-color: rgb(61, 20, 102)')) {
             attributes[NotusAttribute.backgroundColor.key] =
                 NotusAttribute.bcbruise.value;
           }
 
-          if (element.attributes['style'].startsWith('color: rgb(0 , 0, 0)')) {
+          if (element.attributes['style'].startsWith('color: rgb(0, 0, 0)') ||
+              element.attributes['style'].contains(' color: rgb(0, 0, 0)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.black.value;
           }
-          if (element.attributes['style'].startsWith('color: rgb(230, 0, 0)')) {
+          if (element.attributes['style'].startsWith('color: rgb(230, 0, 0)') ||
+              element.attributes['style'].contains(' color: rgb(230, 0, 0)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.red.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(255, 153, 0)')) {
+                  .startsWith('color: rgb(255, 153, 0)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(255, 153, 0)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.orange.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(255, 255, 0)')) {
+                  .startsWith('color: rgb(255, 255, 0)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(255, 255, 0)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.yellow.value;
           }
-          if (element.attributes['style'].startsWith('color: rgb(0, 138, 0)')) {
+          if (element.attributes['style'].startsWith('color: rgb(0, 138, 0)') ||
+              element.attributes['style'].contains(' color: rgb(0, 138, 0)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.green.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(0, 102, 204)')) {
+                  .startsWith('color: rgb(0, 102, 204)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(0, 102, 204)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.blue.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(153, 51, 255)')) {
+                  .startsWith('color: rgb(153, 51, 255)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(153, 51, 255)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.purple.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(255, 255, 255)')) {
+                  .startsWith('color: rgb(255, 255, 255)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(255, 255, 255)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.white.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(250, 204, 204)')) {
+                  .startsWith('color: rgb(250, 204, 204)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(250, 204, 204)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.pink.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(255, 235, 204)')) {
+                  .startsWith('color: rgb(255, 235, 204)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(255, 235, 204)')) {
             attributes[NotusAttribute.color.key] =
                 NotusAttribute.magnolia.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(255, 255, 204)')) {
+                  .startsWith('color: rgb(255, 255, 204)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(255, 255, 204)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.cream.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(204, 232, 204)')) {
+                  .startsWith('color: rgb(204, 232, 204)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(204, 232, 204)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.mint.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(204, 224, 245)')) {
+                  .startsWith('color: rgb(204, 224, 245)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(204, 224, 245)')) {
             attributes[NotusAttribute.color.key] =
                 NotusAttribute.eggshell.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(235, 214, 255)')) {
+                  .startsWith('color: rgb(235, 214, 255)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(235, 214, 255)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.mauve.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(187, 187, 187)')) {
+                  .startsWith('color: rgb(187, 187, 187)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(187, 187, 187)')) {
             attributes[NotusAttribute.color.key] =
                 NotusAttribute.lightGrey.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(240, 102, 102)')) {
+                  .startsWith('color: rgb(240, 102, 102)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(240, 102, 102)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.rosy.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(255, 194, 102)')) {
+                  .startsWith('color: rgb(255, 194, 102)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(255, 194, 102)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.amber.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(255, 255, 102)')) {
+                  .startsWith('color: rgb(255, 255, 102)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(255, 255, 102)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.canary.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(102, 185, 102)')) {
+                  .startsWith('color: rgb(102, 185, 102)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(102, 185, 102)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.regent.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(102, 163, 224)')) {
+                  .startsWith('color: rgb(102, 163, 224)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(102, 163, 224)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.euston.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(194, 133, 255)')) {
+                  .startsWith('color: rgb(194, 133, 255)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(194, 133, 255)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.premier.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(136, 136, 136)')) {
+                  .startsWith('color: rgb(136, 136, 136)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(136, 136, 136)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.midGrey.value;
           }
-          if (element.attributes['style'].startsWith('color: rgb(161, 0, 0)')) {
+          if (element.attributes['style'].startsWith('color: rgb(161, 0, 0)') ||
+              element.attributes['style'].contains(' color: rgb(161, 0, 0)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.maroon.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(178, 107, 0)')) {
+                  .startsWith('color: rgb(178, 107, 0)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(178, 107, 0)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.mustard.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(178, 178, 0)')) {
+                  .startsWith('color: rgb(178, 178, 0)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(178, 178, 0)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.sick.value;
           }
-          if (element.attributes['style'].startsWith('color: rgb(0, 97, 0)')) {
+          if (element.attributes['style'].startsWith('color: rgb(0, 97, 0)') ||
+              element.attributes['style'].contains(' color: rgb(0, 97, 0)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.snooker.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(0, 71, 178)')) {
+                  .startsWith('color: rgb(0, 71, 178)') ||
+              element.attributes['style'].contains(' color: rgb(0, 71, 178)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.everton.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(107, 36, 178)')) {
+                  .startsWith('color: rgb(107, 36, 178)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(107, 36, 178)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.lenny.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(68, 68, 68)')) {
+                  .startsWith('color: rgb(68, 68, 68)') ||
+              element.attributes['style'].contains(' color: rgb(68, 68, 68)')) {
             attributes[NotusAttribute.color.key] =
                 NotusAttribute.charcoal.value;
           }
-          if (element.attributes['style'].startsWith('color: rgb(92, 0, 0)')) {
+          if (element.attributes['style'].startsWith('color: rgb(92, 0, 0)') ||
+              element.attributes['style'].contains(' color: rgb(92, 0, 0)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.budget.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(102, 61, 0)')) {
+                  .startsWith('color: rgb(102, 61, 0)') ||
+              element.attributes['style'].contains(' color: rgb(102, 61, 0)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.brown.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(102, 102, 0)')) {
+                  .startsWith('color: rgb(102, 102, 0)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(102, 102, 0)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.bean.value;
           }
-          if (element.attributes['style'].startsWith('color: rgb(0, 55, 0)')) {
+          if (element.attributes['style'].startsWith('color: rgb(0, 55, 0)') ||
+              element.attributes['style'].contains(' color: rgb(0, 55, 0)')) {
             attributes[NotusAttribute.color.key] =
                 NotusAttribute.aftereight.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(0, 41, 102)')) {
+                  .startsWith('color: rgb(0, 41, 102)') ||
+              element.attributes['style'].contains(' color: rgb(0, 41, 102)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.ocean.value;
           }
           if (element.attributes['style']
-              .startsWith('color: rgb(61, 20, 102)')) {
+                  .startsWith('color: rgb(61, 20, 102)') ||
+              element.attributes['style']
+                  .contains(' color: rgb(61, 20, 102)')) {
             attributes[NotusAttribute.color.key] = NotusAttribute.bruise.value;
           }
         }
