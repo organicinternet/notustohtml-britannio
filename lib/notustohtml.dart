@@ -446,7 +446,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         final nodes = element.nodes;
 
         // get the custom class if available
-        attributes['p'] = htmlNode.className;
+        blockAttributes['p'] = htmlNode.className ?? 'body-two';
 
         if (element.className.contains('ql-align-left')) {
           blockAttributes['alignment'] = 'left';
@@ -475,7 +475,8 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
             );
           }
 
-          if (blockAttributes['alignment'] != null) {
+          if (blockAttributes['alignment'] != null ||
+              blockAttributes['p'] != null) {
             delta..insert('\n', blockAttributes);
           } else {
             if (delta.isEmpty ||

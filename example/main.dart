@@ -186,8 +186,12 @@ void main() {
   //     '<p><span class="ql-font-7">left</span></p><p class="ql-align-center"><span class="ql-font-7">center</span></p><p class="ql-align-right"><span class="ql-font-7">right</span></p><p class="ql-align-center"><span class="ql-font-7">center</span></p><p><span class="ql-font-7">left</span></p><p class="ql-align-justify"><br></p>';
   // String htmlNotes =
   //     '<p><span style="color: rgb(255, 255, 0); background-color: rgb(230, 0, 0);">This text is highlighted red with a yellow font. </span></p><p><span style="color: rgb(255, 255, 0);">And if I colour this text without a highlight, it removes the highlight above.</span></p>';
+  // String htmlNotes =
+  //     '<p class=""><span style="color: rgb(255, 255, 0)"><span style="background-color: rgb(230, 0, 0)">This text is highlighted red with a yellow font. </span></span></p><p class=""><span style="color: rgb(255, 255, 0)">And if I colour this text without a highlight, it removes the highlight above.</span></p>';
+  // String htmlNotes =
+  //     '<p class="body-one">Some body one nonsense.</p><p class="body-two">And some body two nonsense.</p>';
   String htmlNotes =
-      '<p class=""><span style="color: rgb(255, 255, 0)"><span style="background-color: rgb(230, 0, 0)">This text is highlighted red with a yellow font. </span></span></p><p class=""><span style="color: rgb(255, 255, 0)">And if I colour this text without a highlight, it removes the highlight above.</span></p>';
+      '<p class="">A card to try the padding on.</p><p class="">Does it have paragraph breaks?</p><p class="">Doesn’t look like it.</p><p class="">How about this one?</p><p class="">Nah, still not working!</p><p class="">Lovely space, but is is just a br?</p><p class="">Who knows!</p><p><br></p><p>I’m simply toooy</p><p>Yeah yeah yeah</p>';
   Delta htmlNotesDelta = converter.decode(htmlNotes); // Zefyr compatible Delta
   NotusDocument htmlNotesDocument = NotusDocument.fromDelta(htmlNotesDelta);
   String htmlNotesJsonString = json.encode(htmlNotesDocument.toDelta());
