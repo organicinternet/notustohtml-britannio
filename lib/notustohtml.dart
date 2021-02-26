@@ -465,6 +465,18 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
           // The p tag looks like <p><br></p> so we should treat it as a blank
           // line
           return delta..insert('\n');
+        } else if (nodes.length == 1 &&
+            nodes.first is dom.Element &&
+            (nodes.first as dom.Element).localName == 'img') {
+          NotusDocument tempdocument;
+          tempdocument = NotusDocument.fromDelta(delta);
+          final int index = tempdocument.length;
+          tempdocument.format(
+              index - 1,
+              0,
+              NotusAttribute.embed
+                  .image((nodes.first as dom.Element).attributes['src']));
+          return tempdocument.toDelta();
         } else {
           for (int i = 0; i < nodes.length; i++) {
             delta = _parseNode(
