@@ -188,7 +188,7 @@ packages:
     description:
       path: "packages/notus/"
       ref: master
-      resolved-ref: "48c1544d8fe5aeba58098749cdcea732f0b37024"
+      resolved-ref: "5237e454ca4417ff258d0948def0717e2f95de96"
       url: "git://github.com/organicinternet/zefyr.git"
     source: git
     version: "0.1.5"
