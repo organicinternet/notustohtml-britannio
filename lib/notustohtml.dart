@@ -97,6 +97,26 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
     }
   }
 
+  String _getAlignmentClass(NotusStyle style) {
+    if (style.value<String>(NotusAttribute.alignment) ==
+        NotusAttribute.leftAlignment.value) {
+      return ' ql-align-left';
+    }
+    if (style.value<String>(NotusAttribute.alignment) ==
+        NotusAttribute.centerAlignment.value) {
+      return ' ql-align-center';
+    }
+    if (style.value<String>(NotusAttribute.alignment) ==
+        NotusAttribute.rightAlignment.value) {
+      return ' ql-align-right';
+    }
+    if (style.value<String>(NotusAttribute.alignment) ==
+        NotusAttribute.justifyAlignment.value) {
+      return ' ql-align-justify';
+    }
+    return '';
+  }
+
   void _parseLineNode(LineNode node, {inBlockQuote = false}) {
     final bool isHeading = node.style.contains(NotusAttribute.heading);
     final bool isList = node.style.containsSame(NotusAttribute.ul) ||
@@ -110,6 +130,7 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
     if (isHeading) {
       tag = _getHeadingTag(node.style);
       cssClass = _getHeadingClass(node.style);
+      cssClass = (cssClass ?? '') + _getAlignmentClass(node.style);
     } else if (isList) {
       tag = kListItem;
     } else {
@@ -118,27 +139,7 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
         cssClass = node.style.value<String>(NotusAttribute.p);
       }
       if (node.style != null && node.style.contains(NotusAttribute.alignment)) {
-        if (cssClass != null) {
-          cssClass += ' ';
-        } else {
-          cssClass = '';
-        }
-        if (node.style.value<String>(NotusAttribute.alignment) ==
-            NotusAttribute.leftAlignment.value) {
-          cssClass += 'ql-align-left';
-        }
-        if (node.style.value<String>(NotusAttribute.alignment) ==
-            NotusAttribute.centerAlignment.value) {
-          cssClass += 'ql-align-center';
-        }
-        if (node.style.value<String>(NotusAttribute.alignment) ==
-            NotusAttribute.rightAlignment.value) {
-          cssClass += 'ql-align-right';
-        }
-        if (node.style.value<String>(NotusAttribute.alignment) ==
-            NotusAttribute.justifyAlignment.value) {
-          cssClass += 'ql-align-justify';
-        }
+        cssClass = (cssClass ?? '') + _getAlignmentClass(node.style);
       }
       // throw UnsupportedError('Unsupported LineNode style: ${node.style}');
     }
@@ -446,7 +447,15 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         final nodes = element.nodes;
 
         // get the custom class if available
-        blockAttributes['p'] = htmlNode.className ?? 'body-two';
+        if (element.className.contains('body-one')) {
+          blockAttributes['p'] = 'body-one';
+        } else if (element.className.contains('body-three')) {
+          blockAttributes['p'] = 'body-three';
+        } else if (element.className.contains('body-four')) {
+          blockAttributes['p'] = 'body-four';
+        } else {
+          blockAttributes['p'] = 'body-two';
+        }
 
         if (element.className.contains('ql-align-left')) {
           blockAttributes['alignment'] = 'left';
@@ -554,22 +563,31 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       if (element.localName == 'li') {
         blockAttributes['block'] = listType;
       }
+      if (element.className.contains('ql-align-left')) {
+        blockAttributes['alignment'] = 'left';
+      } else if (element.className.contains('ql-align-center')) {
+        blockAttributes['alignment'] = 'center';
+      } else if (element.className.contains('ql-align-right')) {
+        blockAttributes['alignment'] = 'right';
+      } else if (element.className.contains('ql-align-justify')) {
+        blockAttributes['alignment'] = 'justify';
+      }
       if (element.localName == 'h1') {
-        if (element.className == 'lightheader-one') {
+        if (element.className.contains('lightheader-one')) {
           blockAttributes['heading'] = 11;
         } else {
           blockAttributes['heading'] = 1;
         }
       }
       if (element.localName == 'h2') {
-        if (element.className == 'lightheader-two') {
+        if (element.className.contains('lightheader-two')) {
           blockAttributes['heading'] = 12;
         } else {
           blockAttributes['heading'] = 2;
         }
       }
       if (element.localName == 'h3') {
-        if (element.className == 'lightheader-three') {
+        if (element.className.contains('lightheader-three')) {
           blockAttributes['heading'] = 13;
         } else {
           blockAttributes['heading'] = 3;
@@ -618,7 +636,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         attributes['s'] = true;
       }
 
-      if (element.localName == 'span') {
+      if (true || element.localName == 'span') {
         // could be color, backgroundColor or ql-font
         if (element.attributes['style'] != null) {
           if (element.attributes['style']
