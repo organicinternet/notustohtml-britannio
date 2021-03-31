@@ -311,8 +311,15 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
     } else if (node is EmbedNode) {
       // TODO add EmbedNode support
       var value = node.style.value(NotusAttribute.embed);
+      var linkValue = node.style.value(NotusAttribute.link);
       if (value['type'] == 'image') {
+        if (linkValue != null) {
+          htmlBuffer.write('<a href="$linkValue" target="_blank">');
+        }
         htmlBuffer.write('<img src="${value['source']}">');
+        if (linkValue != null) {
+          htmlBuffer.write('</a>');
+        }
       }
     } else {
       throw 'Unsupported LeafNode';
@@ -477,15 +484,17 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         } else if (nodes.length == 1 &&
             nodes.first is dom.Element &&
             (nodes.first as dom.Element).localName == 'img') {
-          NotusDocument tempdocument;
-          tempdocument = NotusDocument.fromDelta(delta);
-          final int index = tempdocument.length;
-          tempdocument.format(
-              index - 1,
-              0,
-              NotusAttribute.embed
-                  .image((nodes.first as dom.Element).attributes['src']));
-          return tempdocument.toDelta();
+          // NotusDocument tempdocument;
+          // tempdocument = NotusDocument.fromDelta(delta);
+          // final int index = tempdocument.length;
+          // tempdocument.format(
+          //     index - 1,
+          //     0,
+          //     NotusAttribute.embed
+          //         .image((nodes.first as dom.Element).attributes['src']));
+          // return tempdocument.toDelta();
+          attributes['embed'] = NotusAttribute.embed
+              .image((nodes.first as dom.Element).attributes['src']);
         } else {
           for (int i = 0; i < nodes.length; i++) {
             delta = _parseNode(
@@ -614,6 +623,11 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         final int index = tempdocument.length;
         tempdocument.format(index - 1, 0,
             NotusAttribute.embed.image(element.attributes['src']));
+        if (attributes['a'] != null) {
+          print('DOING THE LINK');
+          tempdocument.format(
+              index - 1, 1, NotusAttribute.link.fromString(attributes['a']));
+        }
       }
       if (element.localName == 'hr') {
         delta.insert('\n');
@@ -634,6 +648,10 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       }
       if (element.localName == 's') {
         attributes['s'] = true;
+      }
+
+      if (element.localName == 'a') {
+        attributes['a'] = element.attributes['href'];
       }
 
       if (true || element.localName == 'span') {
@@ -1047,10 +1065,6 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
           attributes[NotusAttribute.span.key] =
               NotusAttribute.span.fontQl9.value;
         }
-      }
-
-      if (element.localName == 'a') {
-        attributes['a'] = element.attributes['href'];
       }
 
       if (element.children.isEmpty) {
