@@ -490,7 +490,11 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         } else if (nodes.length == 1 &&
             nodes.first is dom.Element &&
             (nodes.first as dom.Element).localName == 'img') {
-          delta..insert('\n');
+          // if (blockAttributes['alignment'] == null &&
+          //     blockAttributes['p'] == null) {
+          //   // it won't get the \n added later
+          //   delta..insert('\n');
+          // }
           NotusDocument tempdocument;
           tempdocument = NotusDocument.fromDelta(delta);
           final int index = tempdocument.length;
@@ -519,13 +523,18 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
               nodes[i],
               delta,
               parentAttributes: attributes,
-              parentBlockAttributes: blockAttributes,
+              parentBlockAttributes: null,
             );
           }
 
           if (blockAttributes['alignment'] != null ||
               blockAttributes['p'] != null) {
-            delta..insert('\n', blockAttributes);
+            if (delta.last.data == '\n') {
+              if (delta.last.attributes != null)
+                delta.last.attributes.addAll(blockAttributes);
+            } else {
+              delta..insert('\n', blockAttributes);
+            }
           } else {
             if (delta.isEmpty ||
                 !(delta.last.data is String &&
@@ -564,7 +573,6 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       // The html node isn't an element or text e.g. if it's a comment
       return delta;
     }
-    return delta;
   }
 
   Delta _parseElement(
@@ -637,15 +645,19 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
     } else if (type == _HtmlType.EMBED) {
       NotusDocument tempdocument;
       if (element.localName == 'img') {
-        delta.insert('\n');
+        if (delta.last.data is String &&
+            (delta.last.data as String).endsWith('\n')) {
+        } else {
+          delta.insert('\n');
+        }
         tempdocument = NotusDocument.fromDelta(delta);
         final int index = tempdocument.length;
         tempdocument.format(index - 1, 0,
             NotusAttribute.embed.image(element.attributes['src']));
         if (attributes['a'] != null) {
-          print('DOING THE LINK');
+          // print('DOING THE LINK ' + attributes['a']);
           tempdocument.format(
-              index - 1, 1, NotusAttribute.link.fromString(attributes['a']));
+              index - 1, 2, NotusAttribute.link.fromString(attributes['a']));
         }
       }
       if (element.localName == 'hr') {
