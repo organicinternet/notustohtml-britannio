@@ -464,6 +464,8 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
           blockAttributes['p'] = 'body-three';
         } else if (element.className.contains('body-four')) {
           blockAttributes['p'] = 'body-four';
+        } else if (element.className.contains('listed')) {
+          blockAttributes['p'] = 'listed';
         } else {
           blockAttributes['p'] = 'body-two';
         }
