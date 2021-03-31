@@ -311,7 +311,9 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
     } else if (node is EmbedNode) {
       // TODO add EmbedNode support
       var value = node.style.value(NotusAttribute.embed);
-      var linkValue = node.style.value(NotusAttribute.link);
+      var linkValue = node.style.contains(NotusAttribute.link)
+          ? node.style.value(NotusAttribute.link)
+          : null;
       if (value['type'] == 'image') {
         if (linkValue != null) {
           htmlBuffer.write('<a href="$linkValue" target="_blank">');
@@ -484,17 +486,29 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
         } else if (nodes.length == 1 &&
             nodes.first is dom.Element &&
             (nodes.first as dom.Element).localName == 'img') {
-          // NotusDocument tempdocument;
-          // tempdocument = NotusDocument.fromDelta(delta);
+          delta..insert('\n');
+          NotusDocument tempdocument;
+          tempdocument = NotusDocument.fromDelta(delta);
+          final int index = tempdocument.length;
+          tempdocument.format(
+              index - 1,
+              0,
+              NotusAttribute.embed
+                  .image((nodes.first as dom.Element).attributes['src']));
+          return tempdocument.toDelta();
+          // attributes['embed'] = NotusAttribute.embed
+          //     .image((nodes.first as dom.Element).attributes['src']);
+
+          // NotusDocument tempdocument = NotusDocument.fromDelta(delta);
           // final int index = tempdocument.length;
-          // tempdocument.format(
-          //     index - 1,
-          //     0,
-          //     NotusAttribute.embed
-          //         .image((nodes.first as dom.Element).attributes['src']));
+          // tempdocument.format(index - 1, 0,
+          //     NotusAttribute.embed.image(element.attributes['src']));
+          // if (attributes['a'] != null) {
+          //   print('DOING THE LINK');
+          //   tempdocument.format(
+          //       index - 1, 1, NotusAttribute.link.fromString(attributes['a']));
+          // }
           // return tempdocument.toDelta();
-          attributes['embed'] = NotusAttribute.embed
-              .image((nodes.first as dom.Element).attributes['src']);
         } else {
           for (int i = 0; i < nodes.length; i++) {
             delta = _parseNode(
@@ -546,6 +560,7 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
       // The html node isn't an element or text e.g. if it's a comment
       return delta;
     }
+    return delta;
   }
 
   Delta _parseElement(
