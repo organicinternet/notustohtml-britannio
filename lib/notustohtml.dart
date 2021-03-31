@@ -84,6 +84,7 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
   }
 
   String _getHeadingClass(NotusStyle style) {
+    if (!style.contains(NotusAttribute.heading)) return '';
     final level = style.value<int>(NotusAttribute.heading);
     switch (level) {
       case 11:
@@ -98,6 +99,7 @@ class _NotusHtmlEncoder extends Converter<Delta, String> {
   }
 
   String _getAlignmentClass(NotusStyle style) {
+    if (!style.contains(NotusAttribute.alignment)) return '';
     if (style.value<String>(NotusAttribute.alignment) ==
         NotusAttribute.leftAlignment.value) {
       return ' ql-align-left';
