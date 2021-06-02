@@ -496,6 +496,9 @@ class _NotusHtmlDecoder extends Converter<String, Delta> {
           //   delta..insert('\n');
           // }
           NotusDocument tempdocument;
+          if (delta.length == 0) {
+            delta = Delta()..insert('\n');
+          }
           tempdocument = NotusDocument.fromDelta(delta);
           final int index = tempdocument.length;
           tempdocument.format(
